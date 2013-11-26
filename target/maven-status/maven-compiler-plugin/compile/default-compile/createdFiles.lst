@@ -1,0 +1,13 @@
+net\sfr\tv\jms\cnxmgt\JndiLookupTask.class
+net\sfr\tv\jms\cnxmgt\ConnectTask.class
+net\sfr\tv\jms\model\JndiServerDescriptor.class
+net\sfr\tv\jms\context\JmsSubscription.class
+net\sfr\tv\jms\cnxmgt\SubscribeTask.class
+net\sfr\tv\jms\context\OutboundJmsContext.class
+net\sfr\tv\jms\cnxmgt\AbstractConnectionManager.class
+net\sfr\tv\jms\model\JmsSubscriptionDescriptor.class
+net\sfr\tv\jms\cnxmgt\pool\MessageProducerPoolObjectFactory.class
+net\sfr\tv\jms\cnxmgt\OutboundConnectionManager.class
+net\sfr\tv\jms\cnxmgt\InboundConnectionManager.class
+net\sfr\tv\jms\context\InboundJmsContext.class
+net\sfr\tv\jms\context\JmsContext.class

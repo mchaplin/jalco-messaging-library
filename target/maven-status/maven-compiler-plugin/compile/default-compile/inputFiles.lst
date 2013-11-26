@@ -1,0 +1,12 @@
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\cnxmgt\InboundConnectionManager.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\context\JndiServerDescriptor.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\context\OutboundJmsContext.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\cnxmgt\ConnectTask.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\cnxmgt\JndiLookupTask.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\cnxmgt\OutboundConnectionManager.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\context\JmsSubscriptionDescriptor.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\cnxmgt\AbstractConnectionManager.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\context\JmsContext.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\context\JmsSubscription.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\context\InboundJmsContext.java
+D:\dev\trunk\tv\java\jms-cnxmgt\src\main\java\net\sfr\tv\jms\cnxmgt\SubscribeTask.java
