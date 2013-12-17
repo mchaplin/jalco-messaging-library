@@ -4,7 +4,7 @@
 
   <groupId>net.sfr.tv</groupId>
   <artifactId>jalco</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
 
   <name>Jalco JMS Connect Library</name>
