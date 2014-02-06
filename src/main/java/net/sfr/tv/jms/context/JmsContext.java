@@ -42,7 +42,6 @@ public class JmsContext {
         this.jndiContext = jndiContext;
         this.cnx = cnx;
         this.session = session;
-        //this.subscriptions = subscriptions;
     }
 
     public Context getJndiContext() {

@@ -15,6 +15,7 @@
  */
 package net.sfr.tv.jms.cnxmgt.pool;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.jms.JMSException;
 import net.sfr.tv.jms.cnxmgt.OutboundConnectionManager;
@@ -33,35 +34,68 @@ public class MessageProducerPoolObjectFactory implements IPoolObjectFactory<Stri
 
     private static final Logger LOGGER = Logger.getLogger(MessageProducerPoolObjectFactory.class.getName());
     
-    private OutboundConnectionManager connectionManager;
+    private final Set<OutboundConnectionManager> connectionManagers = new HashSet<>();
+    
+    private OutboundConnectionManager activeConnectionManager;
+    
+    private final String name;
+    
+    private final Set<JndiServerDescriptor> servers;
+    
+    private final String preferredServer;
+    
+    private final String clientIdPrefix;
+    
+    private final String cnxFactoryJndiName;
+    
+    private final Credentials credentials;
     
     public MessageProducerPoolObjectFactory(String name, Set<JndiServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials) {
-        connectionManager = new OutboundConnectionManager(name, servers, preferredServer, clientId, cnxFactoryJndiName, credentials);
+        this.name = name;
+        this.servers = servers;
+        this.preferredServer = preferredServer;
+        this.clientIdPrefix = clientId;
+        this.cnxFactoryJndiName = cnxFactoryJndiName;
+        this.credentials = credentials;
     }
     
     @Override
     public OutboundJmsContext create(PoolKey<String> pk) {
-        return connectionManager.createProducer(pk.get());
+        // LED TO HQ214021: Invalid concurrent session usage. Sessions are not supposed to be used by more than one thread concurrently
+        //OutboundConnectionManager connectionManager = new OutboundConnectionManager(name, servers, preferredServer, clientId, cnxFactoryJndiName, credentials);
+        if (activeConnectionManager == null) {
+            activeConnectionManager = new OutboundConnectionManager(name, servers, preferredServer, clientIdPrefix.concat("-").concat(String.valueOf(connectionManagers.size())), cnxFactoryJndiName, credentials);
+            connectionManagers.add(activeConnectionManager);
+        }
+
+        OutboundJmsContext ret = activeConnectionManager.createProducer(pk.get());
+        
+        if (ret == null) {
+            activeConnectionManager = new OutboundConnectionManager(name, servers, preferredServer, clientIdPrefix.concat("-").concat(String.valueOf(connectionManagers.size())), cnxFactoryJndiName, credentials);
+            connectionManagers.add(activeConnectionManager);
+            ret = activeConnectionManager.createProducer(pk.get());
+        }
+        
+        return ret;
     }
 
     @Override
     public void activate(OutboundJmsContext v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void passivate(OutboundJmsContext v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void destroy(OutboundJmsContext v) {
+        LOGGER.info("Destroying OutboundJmsContext : " + v.toString());
         try {
             v.getProducer().close();
         } catch (JMSException ex) {
             LOGGER.error("Unable to properly close MessageProducer !", ex);
         }
     }
-
-    
 }

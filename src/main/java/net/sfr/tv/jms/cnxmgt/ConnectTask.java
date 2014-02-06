@@ -36,15 +36,15 @@ public class ConnectTask implements Callable<JmsContext> {
     
     private static final Logger LOGGER = Logger.getLogger(ConnectTask.class);
     
-    private Context jndiContext;
+    private final Context jndiContext;
     
-    private String clientId;
+    private final String clientId;
     
-    private String connectionFactory;
+    private final String connectionFactory;
     
-    private Credentials credentials;
+    private final Credentials credentials;
     
-    private ExceptionListener el;
+    private final ExceptionListener el;
     
     public ConnectTask(Context jndiContext, String clientId, String connectionFactory, Credentials credentials, ExceptionListener el) {
         this.jndiContext = jndiContext;
@@ -65,8 +65,6 @@ public class ConnectTask implements Callable<JmsContext> {
     @Override
     public JmsContext call() throws Exception {
         
-        LOGGER.info("Trying to connect to ".concat(jndiContext.toString()));
-        
         Connection cnx;
         Session session;
         
@@ -75,7 +73,7 @@ public class ConnectTask implements Callable<JmsContext> {
             cnx = getConnection(jndiContext, clientId, connectionFactory, credentials);
             cnx.setExceptionListener((ExceptionListener) el);
             //session = ContextFactory.createSession(cnx);
-            session = cnx.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            session = cnx.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
           
             return new JmsContext(jndiContext, cnx, session);
             
@@ -100,6 +98,8 @@ public class ConnectTask implements Callable<JmsContext> {
      */
     private Connection getConnection(Context ctx, String clientId, String connectionFactory, Credentials credentials) throws ResourceInitializerException {
 
+        LOGGER.info("Trying to connect to ".concat(connectionFactory != null ? connectionFactory : "null").concat(", with clientId : ".concat(clientId != null ? clientId : "null")));
+        
         Connection cnx = null;
 
         try {
@@ -111,7 +111,7 @@ public class ConnectTask implements Callable<JmsContext> {
             throw new ResourceInitializerException(ex);
         } catch (JMSException ex) {
             if (cnx != null) {
-                try { cnx.close(); } catch (JMSException e) { LOGGER.error("Unable to gracefully close connection upon error !", e); };
+                try { cnx.close(); } catch (JMSException e) { LOGGER.error("Unable to gracefully close connection upon error ! : ".concat(e.getMessage())); };
             }
             throw new ResourceInitializerException(ex);
         }

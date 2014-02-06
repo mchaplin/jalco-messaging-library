@@ -26,7 +26,7 @@ import javax.naming.Context;
  */
 public class OutboundJmsContext extends JmsContext {
     
-    private MessageProducer producer;
+    private final MessageProducer producer;
     
     public OutboundJmsContext(Context jndiContext, Connection cnx, Session session, MessageProducer producer) {
         super(jndiContext, cnx, session);

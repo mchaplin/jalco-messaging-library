@@ -20,13 +20,11 @@ import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
+import javax.jms.Session;
 import javax.naming.NamingException;
 import net.sfr.tv.jms.model.JndiServerDescriptor;
-import net.sfr.tv.jms.context.OutboundJmsContext;import net.sfr.tv.model.Credentials;
-;
-import org.apache.log4j.Logger;
-import org.apache.log4j.Logger;
-import org.apache.log4j.Logger;
+import net.sfr.tv.jms.context.OutboundJmsContext;
+import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
 /**
@@ -45,13 +43,16 @@ public class OutboundConnectionManager extends AbstractConnectionManager {
     
     public OutboundJmsContext createProducer(String destination) {
         
-        MessageProducer producer = null;
+        Session session;
+        MessageProducer producer;
         
         try {
             
             Destination dest = (Destination) jndiContext.lookup(destination);
-
-            producer = context.getSession().createProducer(dest);
+            
+            session = context.getConnection().createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
+            producer = session.createProducer(dest);
+            
             // Set Delivery Mode (Durable, Non-Durable)
             producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
             // Disable messageId & timestamp, saves uniqueId & timestamp generation on the JMS server side
@@ -60,16 +61,17 @@ public class OutboundConnectionManager extends AbstractConnectionManager {
             // Set TTL, afterwards message will be moved to an expiry queue
             producer.setTimeToLive(60 * 60 * 1000);
             
-            LOGGER.info("JMS Producer configuration : ");
+            LOGGER.info("Destination : ".concat(destination).concat(" : allocating a JMS producer. Configuration : "));
             LOGGER.info("\t Delivery Mode : " + producer.getDeliveryMode());
             LOGGER.info("\t TTL : " + producer.getTimeToLive());
             LOGGER.info("\t Message ID ? " + !producer.getDisableMessageID());
             LOGGER.info("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
+         
+            return new OutboundJmsContext(context.getJndiContext(), context.getConnection(), session, producer);
             
         } catch (NamingException | JMSException ex) {
-            LOGGER.error(ex.getMessage(), ex);
+            LOGGER.error(ex.getMessage().concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+            return null;
         }
-        
-        return new OutboundJmsContext(context.getJndiContext(), context.getConnection(), context.getSession(), producer);
     }
 }
