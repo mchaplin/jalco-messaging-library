@@ -4,7 +4,7 @@
 
   <groupId>net.sfr.tv</groupId>
   <artifactId>jalco</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <packaging>jar</packaging>
 
   <name>Jalco JMS Connect Library</name>
@@ -30,18 +30,18 @@
     <dependency>
       <groupId>net.sfr.tv</groupId>  
       <artifactId>common</artifactId>  
-      <version>1.0.0</version>  
+      <version>1.0.3</version>  
     </dependency>
     <dependency>
       <groupId>org.jboss.javaee</groupId>
       <artifactId>jboss-jms-api</artifactId>
       <version>1.1.0.GA</version>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>org.pacesys</groupId>
       <artifactId>kbop</artifactId>
       <version>1.0.0</version>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>

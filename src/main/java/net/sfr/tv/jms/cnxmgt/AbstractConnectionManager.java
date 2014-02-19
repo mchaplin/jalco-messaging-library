@@ -182,6 +182,8 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
      */
     public void disconnect() {
       
+        LOGGER.info("Disconnect...");
+        
         // TERMINATE SESSION
         if (context.getSession() != null) {
             try {

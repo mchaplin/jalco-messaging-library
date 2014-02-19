@@ -28,9 +28,20 @@ public class OutboundJmsContext extends JmsContext {
     
     private final MessageProducer producer;
     
+    private Boolean valid;
+    
     public OutboundJmsContext(Context jndiContext, Connection cnx, Session session, MessageProducer producer) {
         super(jndiContext, cnx, session);
         this.producer = producer;
+        this.valid = Boolean.TRUE;
+    }
+
+    public Boolean isValid() {
+        return valid;
+    }
+
+    public void invalidate() {
+        this.valid = Boolean.FALSE;
     }
 
     public MessageProducer getProducer() {

@@ -34,6 +34,8 @@ public class JndiProviderConfiguration {
     
     private Credentials credentials;
     
+    private String preferredServer; // TODO : By groups..
+    
     private Set<String> groups = new HashSet<>();
     
     private Map<String, Set<JndiServerDescriptor>> serversGroups;
@@ -48,7 +50,7 @@ public class JndiProviderConfiguration {
         
         JndiServerDescriptor server;
 
-        serversGroups = new HashMap<String, Set<JndiServerDescriptor>>();
+        serversGroups = new HashMap<>();
         
         for (String group : sGroups) {
             LOGGER.debug("Group : " + group);
@@ -59,21 +61,30 @@ public class JndiProviderConfiguration {
             
             LOGGER.debug("Key prefix : " + keyPrefix);
             
+            // AWFUL PARSING
             for (String key : keys) {
                 if (key.startsWith(keyPrefix)) {
                     serverAlias = (service == null ? key.split("\\.")[3] : key.split("\\.")[4]);
                     LOGGER.debug("Server alias : " + serverAlias);
+                    
+                    if (serverAlias.equals("preferred")) {
+                        preferredServer = props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias));
+                    } else {
+                        
+                        if (serversGroups.get(group) == null) {
+                            serversGroups.put(group, new HashSet<JndiServerDescriptor>());
+                        }
 
-                    if (serversGroups.get(group) == null) {
-                        serversGroups.put(group, new HashSet<JndiServerDescriptor>());
+                        server = new JndiServerDescriptor(
+                            serverAlias,
+                            props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".host")),
+                            Integer.valueOf(props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".port"))));
+
+                        if (!serversGroups.get(group).contains(server)) {
+                            serversGroups.get(group).add(server);    
+                            LOGGER.info(server.toString());
+                        }
                     }
-                    server = new JndiServerDescriptor(
-                        serverAlias,
-                        props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".host")),
-                        Integer.valueOf(props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".port"))));
-
-                    serversGroups.get(group).add(server);
-                    LOGGER.info(server.toString());
                 }
             }
         }
@@ -95,5 +106,9 @@ public class JndiProviderConfiguration {
 
     public Set<String> getGroups() {
         return groups;
+    }
+
+    public String getPreferredServer() {
+        return preferredServer;
     }
 }

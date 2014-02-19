@@ -61,11 +61,14 @@ public class OutboundConnectionManager extends AbstractConnectionManager {
             // Set TTL, afterwards message will be moved to an expiry queue
             producer.setTimeToLive(60 * 60 * 1000);
             
-            LOGGER.info("Destination : ".concat(destination).concat(" : allocating a JMS producer. Configuration : "));
-            LOGGER.info("\t Delivery Mode : " + producer.getDeliveryMode());
-            LOGGER.info("\t TTL : " + producer.getTimeToLive());
-            LOGGER.info("\t Message ID ? " + !producer.getDisableMessageID());
-            LOGGER.info("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
+            LOGGER.info("Destination : ".concat(destination).concat(" : allocating a JMS producer."));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(" Configuration : ");
+                LOGGER.debug("\t Delivery Mode : " + producer.getDeliveryMode());
+                LOGGER.debug("\t TTL : " + producer.getTimeToLive());
+                LOGGER.debug("\t Message ID ? " + !producer.getDisableMessageID());
+                LOGGER.debug("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
+            }
          
             return new OutboundJmsContext(context.getJndiContext(), context.getConnection(), session, producer);
             
