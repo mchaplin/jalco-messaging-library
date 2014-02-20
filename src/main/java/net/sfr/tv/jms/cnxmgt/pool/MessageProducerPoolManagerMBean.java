@@ -15,12 +15,14 @@
  */
 package net.sfr.tv.jms.cnxmgt.pool;
 
-import net.sfr.tv.api.management.PoolManagerMBean;
-
 /**
  *
  * @author matthieu
  */
-public interface MessageProducerPoolManagerMBean extends PoolManagerMBean {
+public interface MessageProducerPoolManagerMBean {
    
+    public Integer getPoolSize(); 
+    
+    public String getName();
+    
 }
