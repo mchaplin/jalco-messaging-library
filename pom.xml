@@ -4,7 +4,7 @@
 
   <groupId>net.sfr.tv</groupId>
   <artifactId>jalco</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
   <packaging>jar</packaging>
 
   <name>Jalco JMS Connect Library</name>
@@ -30,7 +30,7 @@
     <dependency>
       <groupId>net.sfr.tv</groupId>  
       <artifactId>common</artifactId>  
-      <version>1.0.3</version>  
+      <version>1.0.5</version>  
     </dependency>
     <dependency>
       <groupId>org.jboss.javaee</groupId>

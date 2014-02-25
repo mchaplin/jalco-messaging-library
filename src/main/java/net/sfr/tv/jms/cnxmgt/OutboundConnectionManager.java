@@ -70,7 +70,7 @@ public class OutboundConnectionManager extends AbstractConnectionManager {
                 LOGGER.debug("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
             }
          
-            return new OutboundJmsContext(context.getJndiContext(), context.getConnection(), session, producer);
+            return new OutboundJmsContext(this.name, context.getJndiContext(), context.getConnection(), session, producer);
             
         } catch (NamingException | JMSException ex) {
             LOGGER.error(ex.getMessage().concat(" : Caused by : ").concat(ex.getCause().getMessage()));

@@ -40,16 +40,16 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
     
     private static final Logger LOGGER = Logger.getLogger(AbstractConnectionManager.class);
     
-    private String name;
+    protected final String name;
     
     /** JMS Connection Factory JNDI name */
-    private String cnxFactoryJndiName;
+    private final String cnxFactoryJndiName;
     
     /** JMS ClientID */
-    private String clientId;
+    private final String clientId;
     
     /** JMS credentials */
-    private Credentials credentials;
+    private final Credentials credentials;
         
     /** Configuration reference */
     private Set<JndiServerDescriptor> availableServers;
@@ -63,9 +63,9 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
     protected Context jndiContext;
         
     /** ExecutorService used for periodic JMS connect/subscribe tasks */
-    protected ScheduledExecutorService scheduler;
+    protected final ScheduledExecutorService scheduler;
     
-    public AbstractConnectionManager(String name, Set<JndiServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials) {
+    public AbstractConnectionManager(final String name, final Set<JndiServerDescriptor> servers, final String preferredServer, final String clientId, final String cnxFactoryJndiName, final Credentials credentials) {
         
         this.name = name;
         this.clientId = clientId;
@@ -182,7 +182,7 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
      */
     public void disconnect() {
       
-        LOGGER.info("Disconnect...");
+        LOGGER.info(getName().concat(" : Disconnecting.."));
         
         // TERMINATE SESSION
         if (context.getSession() != null) {

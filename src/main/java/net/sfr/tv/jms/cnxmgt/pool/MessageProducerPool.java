@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.logging.Level;
+import javax.jms.JMSException;
 import net.sfr.tv.jms.cnxmgt.OutboundConnectionManager;
 import net.sfr.tv.jms.context.OutboundJmsContext;
 import net.sfr.tv.jms.model.JndiServerDescriptor;
@@ -53,7 +55,7 @@ public class MessageProducerPool {
                 
         connectionManagers = new ArrayBlockingQueue<>(connections);
         for (int i=0 ; i<connections ; i++) {
-            connectionManagers.add(new OutboundConnectionManager(name, servers, preferredServer, clientId.concat("-").concat(String.valueOf(i)), cnxFactoryJndiName, credentials));
+            connectionManagers.add(new OutboundConnectionManager(name.concat("-").concat(String.valueOf(i)), servers, preferredServer, clientId.concat("-").concat(String.valueOf(i)), cnxFactoryJndiName, credentials));
         }
     }
     
@@ -97,6 +99,32 @@ public class MessageProducerPool {
     
     public void release(String key, OutboundJmsContext instance) {
         pool.get(key).addLast(instance);
+    }
+    
+    public void invalidate(String key, OutboundJmsContext instance) {
+        
+        for (BlockingDeque<OutboundJmsContext> deck : pool.values()) {
+            for (OutboundJmsContext ctx : deck) {
+                if (ctx.getParentName().equals(instance.getParentName())) {
+                    deck.remove(ctx);
+                }
+            }
+        }
+        
+        try {
+            instance.getProducer().close();
+        } catch (JMSException ex) {
+            LOGGER.error(ex.getMessage());
+        }
+        
+        // INVALIDATE THE PARENT CONNECTION MANAGER
+        for (OutboundConnectionManager ocm : connectionManagers) {
+            if (ocm.getName().equals(instance.getParentName())) {
+                ocm.disconnect();
+                connectionManagers.remove(ocm);
+            }
+            ocm = null;
+        }
     }
     
     public void shutdown() {
