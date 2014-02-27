@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.logging.Level;
 import javax.jms.JMSException;
 import net.sfr.tv.jms.cnxmgt.OutboundConnectionManager;
 import net.sfr.tv.jms.context.OutboundJmsContext;
@@ -32,7 +31,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author matthieu
+ * @author matthieu.chaplin@sfr.com
  */
 public class MessageProducerPool {
 
@@ -42,7 +41,7 @@ public class MessageProducerPool {
     
     private final Integer capacity = 10;
     
-    private Map<String, BlockingDeque<OutboundJmsContext>> pool =  new HashMap<>(); // TODO : Synchronize access ?
+    private Map<String, BlockingDeque<OutboundJmsContext>> pool =  new HashMap<String, BlockingDeque<OutboundJmsContext>>(); // TODO : Synchronize access ?
     
     public MessageProducerPool(
             String name, 
@@ -53,9 +52,11 @@ public class MessageProducerPool {
             Credentials credentials,
             Integer connections) {
                 
-        connectionManagers = new ArrayBlockingQueue<>(connections);
+        OutboundConnectionManager ocm;
+        connectionManagers = new ArrayBlockingQueue<OutboundConnectionManager>(connections);
         for (int i=0 ; i<connections ; i++) {
-            connectionManagers.add(new OutboundConnectionManager(name.concat("-").concat(String.valueOf(i)), servers, preferredServer, clientId.concat("-").concat(String.valueOf(i)), cnxFactoryJndiName, credentials));
+            ocm = new OutboundConnectionManager(name.concat("-").concat(String.valueOf(i)), servers, preferredServer, clientId.concat("-").concat(String.valueOf(i)), cnxFactoryJndiName, credentials);
+            connectionManagers.add(ocm);
         }
     }
     
@@ -91,7 +92,7 @@ public class MessageProducerPool {
             
         } else {
             ret = create(key);
-            BlockingDeque<OutboundJmsContext> deck = new LinkedBlockingDeque<>();
+            BlockingDeque<OutboundJmsContext> deck = new LinkedBlockingDeque<OutboundJmsContext>();
             pool.put(key, deck);
             return ret;
         }
@@ -103,33 +104,44 @@ public class MessageProducerPool {
     
     public void invalidate(String key, OutboundJmsContext instance) {
         
+        if (instance == null) {
+            return;
+        }
+         
         for (BlockingDeque<OutboundJmsContext> deck : pool.values()) {
             for (OutboundJmsContext ctx : deck) {
                 if (ctx.getParentName().equals(instance.getParentName())) {
+                    try {
+                        instance.getProducer().close();
+                    } catch (JMSException ex) {
+                        LOGGER.error(ex.getMessage());
+                    }
                     deck.remove(ctx);
                 }
             }
-        }
-        
-        try {
-            instance.getProducer().close();
-        } catch (JMSException ex) {
-            LOGGER.error(ex.getMessage());
-        }
-        
-        // INVALIDATE THE PARENT CONNECTION MANAGER
-        for (OutboundConnectionManager ocm : connectionManagers) {
-            if (ocm.getName().equals(instance.getParentName())) {
-                ocm.disconnect();
-                connectionManagers.remove(ocm);
-            }
-            ocm = null;
         }
     }
     
     public void shutdown() {
         for (OutboundConnectionManager ocm : connectionManagers) {
+            shutdownProducers(ocm);
             ocm.disconnect();
+        }
+    }
+    
+    private void shutdownProducers(OutboundConnectionManager ocm) {
+        
+        for (BlockingDeque<OutboundJmsContext> deck : pool.values()) {
+            for (OutboundJmsContext ctx : deck) {
+                if (ctx.getParentName().equals(ocm.getName())) {
+                    try {
+                        ctx.getProducer().close();
+                    } catch (JMSException ex) {
+                        LOGGER.error(ex.getMessage());
+                    }
+                    deck.remove(ctx);
+                }
+            }
         }
     }
 }

@@ -17,7 +17,7 @@ package net.sfr.tv.jms.cnxmgt.pool;
 
 /**
  *
- * @author matthieu
+ * @author matthieu.chaplin@sfr.com
  */
 public interface MessageProducerPoolManagerMBean {
    

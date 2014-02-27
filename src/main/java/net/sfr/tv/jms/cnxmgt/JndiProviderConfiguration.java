@@ -36,7 +36,7 @@ public class JndiProviderConfiguration {
     
     private String preferredServer; // TODO : By groups..
     
-    private Set<String> groups = new HashSet<>();
+    private Set<String> groups = new HashSet<String>();
     
     private Map<String, Set<JndiServerDescriptor>> serversGroups;
     
@@ -50,7 +50,7 @@ public class JndiProviderConfiguration {
         
         JndiServerDescriptor server;
 
-        serversGroups = new HashMap<>();
+        serversGroups = new HashMap<String, Set<JndiServerDescriptor>>();
         
         for (String group : sGroups) {
             LOGGER.debug("Group : " + group);
