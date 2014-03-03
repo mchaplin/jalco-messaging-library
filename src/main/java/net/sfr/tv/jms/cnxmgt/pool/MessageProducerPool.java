@@ -23,6 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import javax.jms.JMSException;
+import net.sfr.tv.api.NamedObject;
 import net.sfr.tv.jms.cnxmgt.OutboundConnectionManager;
 import net.sfr.tv.jms.context.OutboundJmsContext;
 import net.sfr.tv.jms.model.JndiServerDescriptor;
@@ -33,9 +34,11 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class MessageProducerPool {
+public class MessageProducerPool implements NamedObject {
 
     private static final Logger LOGGER = Logger.getLogger(MessageProducerPool.class.getName());
+    
+    private final String name;
     
     private final Queue<OutboundConnectionManager> connectionManagers;
     
@@ -52,17 +55,22 @@ public class MessageProducerPool {
             Credentials credentials,
             Integer connections) {
                 
+        this.name = name;
         OutboundConnectionManager ocm;
         connectionManagers = new ArrayBlockingQueue<OutboundConnectionManager>(connections);
         for (int i=0 ; i<connections ; i++) {
-            ocm = new OutboundConnectionManager(name.concat("-").concat(String.valueOf(i)), servers, preferredServer, clientId.concat("-").concat(String.valueOf(i)), cnxFactoryJndiName, credentials);
+            ocm = new OutboundConnectionManager(name.concat("-jms-pool-").concat(String.valueOf(i)), servers, preferredServer, clientId.concat("-").concat(String.valueOf(i)), cnxFactoryJndiName, credentials);
             connectionManagers.add(ocm);
         }
     }
     
     /*public getSize() {
-        
     }*/
+    
+    @Override
+    public String getName() {
+        return name;
+    }
     
     //@Override
     private OutboundJmsContext create(String pk) {

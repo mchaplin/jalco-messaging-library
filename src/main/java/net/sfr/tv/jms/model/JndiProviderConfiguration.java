@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.cnxmgt;
+package net.sfr.tv.jms.model;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import net.sfr.tv.jms.model.JndiServerDescriptor;
 import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
