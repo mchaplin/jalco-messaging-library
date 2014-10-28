@@ -36,7 +36,7 @@ public class JmsContext {
 
     private Context jndiContext;
     private Connection cnx = null;
-    private Session session;
+    private final Session session;
     
     public JmsContext(Context jndiContext, Connection cnx, Session session) {
         this.jndiContext = jndiContext;

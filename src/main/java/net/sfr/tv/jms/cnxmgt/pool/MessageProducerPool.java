@@ -112,6 +112,8 @@ public class MessageProducerPool implements NamedObject {
     
     public void invalidate(String key, OutboundJmsContext instance) {
         
+        LOGGER.info("Invalidating connection toward destination : ".concat(key));
+        
         if (instance == null) {
             return;
         }

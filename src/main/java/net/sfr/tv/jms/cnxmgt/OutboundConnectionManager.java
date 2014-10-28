@@ -72,11 +72,8 @@ public class OutboundConnectionManager extends AbstractConnectionManager {
          
             return new OutboundJmsContext(getName(), context.getJndiContext(), context.getConnection(), session, producer);
             
-        } catch (NamingException ex) {
-            LOGGER.error(ex.getMessage().concat(" : Caused by : ").concat(ex.getCause().getMessage()));
-            return null;
-        } catch (JMSException ex) {
-            LOGGER.error(ex.getMessage().concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+        } catch (NamingException | JMSException ex) {
+            LOGGER.error("Unable to create connection upon destination : ".concat(destination).concat(" ! Cause : ").concat(ex.getMessage()));
             return null;
         }
     }
