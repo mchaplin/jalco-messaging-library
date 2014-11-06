@@ -75,7 +75,10 @@ public class MessageProducerPool implements NamedObject {
     //@Override
     private OutboundJmsContext create(String pk) {
         
-        OutboundConnectionManager ocm = connectionManagers.remove();
+        OutboundConnectionManager ocm = connectionManagers.poll();
+        if (ocm == null) {
+            return null;
+        }
         OutboundJmsContext ret = ocm.createProducer(pk);
         connectionManagers.add(ocm);
         
