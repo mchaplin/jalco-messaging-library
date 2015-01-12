@@ -25,22 +25,22 @@ import javax.naming.Context;
  *
  * @author matthieu
  */
-public class InboundJmsContext extends JmsContext {
+public class ConsumerJmsContext extends JmsContext {
     
-    private Set<JmsSubscription> subscriptions = null;
+    private Set<JmsSubscriptionContext> subscriptions = null;
     
-    public InboundJmsContext(Context jndiContext, Connection cnx, Session session) {
+    public ConsumerJmsContext(Context jndiContext, Connection cnx, Session session) {
         super(jndiContext, cnx, session);
     }
     
-    public void addSubscription(JmsSubscription subscription) {
+    public void addSubscription(JmsSubscriptionContext subscription) {
         if (subscriptions == null) {
-            subscriptions = new HashSet<JmsSubscription>();
+            subscriptions = new HashSet<JmsSubscriptionContext>();
         }
         subscriptions.add(subscription);
     }
     
-    public Set<JmsSubscription> getSubscriptions() {
+    public Set<JmsSubscriptionContext> getSubscriptions() {
         return subscriptions;
     }
 }

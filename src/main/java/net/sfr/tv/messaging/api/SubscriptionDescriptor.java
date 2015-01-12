@@ -13,26 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.model;
+package net.sfr.tv.messaging.api;
 
 /**
  * JMS subscription attributes
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class JmsSubscriptionDescriptor {
+public class SubscriptionDescriptor {
 
-    private String destination;
+    private final String destination;
     
-    private boolean isTopicSubscription;
+    private final boolean isTopicSubscription;
     
-    private boolean isDurableSubscription;
+    private final boolean isDurableSubscription;
     
-    private String subscriptionName;
+    private final String subscriptionName;
     
-    private String selector;
+    private final String selector;
     
-    public JmsSubscriptionDescriptor(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionName, String selector) {
+    public SubscriptionDescriptor(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionName, String selector) {
         this.destination = destination;
         this.isTopicSubscription = isTopicSubscription;
         this.isDurableSubscription = isDurableSubscription;

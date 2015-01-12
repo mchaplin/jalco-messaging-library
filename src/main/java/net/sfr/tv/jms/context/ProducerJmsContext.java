@@ -24,7 +24,7 @@ import javax.naming.Context;
  *
  * @author matthieu
  */
-public class OutboundJmsContext extends JmsContext {
+public class ProducerJmsContext extends JmsContext {
     
     /** Name of the OutboundConnectionManager that created this context. */
     private final String parentName;
@@ -33,7 +33,7 @@ public class OutboundJmsContext extends JmsContext {
     
     private Boolean valid;
     
-    public OutboundJmsContext(final String parentName, final Context jndiContext, final Connection cnx, final Session session, final MessageProducer producer) {
+    public ProducerJmsContext(final String parentName, final Context jndiContext, final Connection cnx, final Session session, final MessageProducer producer) {
         super(jndiContext, cnx, session);
         this.parentName = parentName;
         this.producer = producer;

@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
  */
 public class ConnectTask implements Callable<JmsContext> {
     
-    private static final Logger LOGGER = Logger.getLogger(ConnectTask.class);
+    private static final Logger logger = Logger.getLogger(ConnectTask.class);
     
     private final Context jndiContext;
     
@@ -78,7 +78,7 @@ public class ConnectTask implements Callable<JmsContext> {
             return new JmsContext(jndiContext, cnx, session);
             
         } catch (ResourceInitializerException rie) {
-            LOGGER.error("Error while attempting to create a JMS connection : ".concat(rie.getMessage()));
+            logger.error("Error while attempting to create a JMS connection : ".concat(rie.getMessage()));
             return null;
         }
     }
@@ -98,7 +98,7 @@ public class ConnectTask implements Callable<JmsContext> {
      */
     private Connection getConnection(Context ctx, String clientId, String connectionFactory, Credentials credentials) throws ResourceInitializerException {
 
-        LOGGER.info("Trying to connect to ".concat(connectionFactory != null ? connectionFactory : "null").concat(", with clientId : ".concat(clientId != null ? clientId : "null")));
+        logger.info("Trying to connect to ".concat(connectionFactory != null ? connectionFactory : "null").concat(", with clientId : ".concat(clientId != null ? clientId : "null")));
         
         Connection cnx = null;
 
@@ -111,7 +111,7 @@ public class ConnectTask implements Callable<JmsContext> {
             throw new ResourceInitializerException(ex);
         } catch (JMSException ex) {
             if (cnx != null) {
-                try { cnx.close(); } catch (JMSException e) { LOGGER.error("Unable to gracefully close connection upon error ! : ".concat(e.getMessage())); };
+                try { cnx.close(); } catch (JMSException e) { logger.error("Unable to gracefully close connection upon error ! : ".concat(e.getMessage())); };
             }
             throw new ResourceInitializerException(ex);
         }

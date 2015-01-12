@@ -17,8 +17,6 @@ package net.sfr.tv.jms.cnxmgt;
 
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.jms.ExceptionListener;
@@ -26,8 +24,10 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.naming.Context;
 import net.sfr.tv.jms.context.JmsContext;
-import net.sfr.tv.jms.context.JmsSubscription;
-import net.sfr.tv.jms.model.JndiServerDescriptor;
+import net.sfr.tv.jms.context.JmsSubscriptionContext;
+import net.sfr.tv.messaging.api.ConnectionManager;
+import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
+import net.sfr.tv.messaging.impl.AbstractConnectionManager;
 import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
@@ -36,61 +36,33 @@ import org.apache.log4j.Logger;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public abstract class AbstractConnectionManager implements ExceptionListener {
+public abstract class JmsConnectionManager extends AbstractConnectionManager implements ConnectionManager, ExceptionListener {
     
-    private static final Logger LOGGER = Logger.getLogger(AbstractConnectionManager.class);
-    
-    private final String name;
+    private static final Logger logger = Logger.getLogger(JmsConnectionManager.class);
     
     /** JMS Connection Factory JNDI name */
     private final String cnxFactoryJndiName;
     
     /** JMS ClientID */
     private final String clientId;
-    
-    /** JMS credentials */
-    private final Credentials credentials;
-        
-    /** Configuration reference */
-    private Set<JndiServerDescriptor> availableServers;
-    /** Active configuration reference */
-    private JndiServerDescriptor activeServer;
-    
+
     /** Currently used JMS resources */
     protected JmsContext context;
     
     /** Current JNDI context */
     protected Context jndiContext;
-        
-    /** ExecutorService used for periodic JMS connect/subscribe tasks */
-    protected final ScheduledExecutorService scheduler;
     
-    public AbstractConnectionManager(final String name, final Set<JndiServerDescriptor> servers, final String preferredServer, final String clientId, final String cnxFactoryJndiName, final Credentials credentials) {
-        
-        this.name = name;
+    public JmsConnectionManager(final String name, final Set<MessagingServerDescriptor> servers, final String preferredServer, final String clientId, final String cnxFactoryJndiName, final Credentials credentials) {
+        super(name, credentials, servers, preferredServer);
         this.clientId = clientId;
         this.cnxFactoryJndiName = cnxFactoryJndiName;
-        this.credentials = credentials;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
         
-        // Try with 1st server. TODO : Optimize and round-robin
-        this.availableServers = servers;
-        this.activeServer = servers.iterator().next();
-        if (preferredServer != null && preferredServer.trim().length() != 0) {
-            for (JndiServerDescriptor desc : servers) {
-                if (desc.getAlias().equals(preferredServer)) {
-                    activeServer = desc;
-                    break;
-                }
-            }
-        }
-
         lookup(activeServer, 2);
         
-        LOGGER.info(getName().concat(" : Service provider URL : ").concat(activeServer.getProviderUrl()));
+        logger.info(getName().concat(" : Service provider URL : ").concat(activeServer.getProviderUrl()));
     }
     
-    public final void lookup(JndiServerDescriptor jndiServer, long delay) {
+    public final void lookup(MessagingServerDescriptor jndiServer, long delay) {
         ScheduledFuture<Context> futureContext = null;
         JndiLookupTask jlt;
         boolean initConnect = true;
@@ -103,9 +75,9 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
             }
             
         } catch (InterruptedException ex) {
-            LOGGER.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         } catch (ExecutionException ex) {
-            LOGGER.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         }
     }
     
@@ -127,9 +99,9 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
             }
             
         } catch (InterruptedException ex) {
-            LOGGER.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         } catch (ExecutionException ex) {
-            LOGGER.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         }
     }
     
@@ -149,10 +121,10 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
      * @param session
      * @param subscriptionName 
      */
-    public final void unsubscribe(JmsSubscription subscription, Session session) {
+    public final void unsubscribe(JmsSubscriptionContext subscription, Session session) {
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getName().concat(" : About to unsubscribe : ").concat(subscription.getSubscriptionName()));
+        if (logger.isDebugEnabled()) {
+            logger.debug(getName().concat(" : About to unsubscribe : ").concat(subscription.getSubscriptionName()));
         }
         
         // CLOSE CONSUMTER
@@ -160,19 +132,19 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
             try {
                 subscription.getConsumer().close();
             } catch (JMSException ex) {
-                LOGGER.warn(ex.getMessage());
+                logger.warn(ex.getMessage());
             }
 
         }
         
         // UNSUBSCRIBE
-        if (session != null && subscription.getMetadata().isIsTopicSubscription() && !subscription.getMetadata().isIsDurableSubscription()) {
+        if (session != null && subscription.getDescriptor().isIsTopicSubscription() && !subscription.getDescriptor().isIsDurableSubscription()) {
             // Unsubscribe, to prevent leaving a potential 'shadow' queue & permit reusing the same clientId later on.
             try {
                 ((Session) session).unsubscribe(subscription.getSubscriptionName());
-                LOGGER.info(getName().concat(" : Unsubscribed : ").concat(subscription.getSubscriptionName()));
+                logger.info(getName().concat(" : Unsubscribed : ").concat(subscription.getSubscriptionName()));
             } catch (JMSException ex) {
-                LOGGER.error(getName().concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+                logger.error(getName().concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
             }
         }
     }
@@ -186,14 +158,14 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
      */
     public void disconnect() {
       
-        LOGGER.info(getName().concat(" : Disconnecting.."));
+        logger.info(getName().concat(" : Disconnecting.."));
         
         // TERMINATE SESSION
         if (context.getSession() != null) {
             try {
                 ((Session) context.getSession()).close();
             } catch (JMSException ex) {
-                LOGGER.warn(ex.getMessage());
+                logger.warn(ex.getMessage());
             }
         }
         
@@ -203,7 +175,7 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
                 context.getConnection().stop();
                 context.getConnection().close();
             } catch (JMSException ex) {
-                LOGGER.warn(ex.getMessage());
+                logger.warn(ex.getMessage());
             }
         }
     }
@@ -211,14 +183,14 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
     @Override
     public void onException(JMSException jmse) {
         
-        LOGGER.error(getName().concat(" : onException : ").concat(jmse.getMessage()));
+        logger.error(getName().concat(" : onException : ").concat(jmse.getMessage()));
         
         if (jmse.getMessage().toUpperCase().indexOf("DISCONNECTED") != -1) {
 
             // BLACKLIST ACTIVE SERVER
-            LOGGER.error(getName().concat(" : Active Server not available anymore ! ").concat(activeServer.getProviderUrl()));
+            logger.error(getName().concat(" : Active Server not available anymore ! ").concat(activeServer.getProviderUrl()));
             if (availableServers.size() > 1) {
-                for (JndiServerDescriptor srv : availableServers) {
+                for (MessagingServerDescriptor srv : availableServers) {
                     if (!srv.equals(activeServer)) {
                         activeServer = srv;
                         break;
@@ -228,7 +200,7 @@ public abstract class AbstractConnectionManager implements ExceptionListener {
 
             // LOOKUP NEW JNDI CONTEXT
             lookup(activeServer, 2);
-            LOGGER.info(getName().concat(" : JNDI service provider URL : ").concat(activeServer.getProviderUrl()));
+            logger.info(getName().concat(" : JNDI service provider URL : ").concat(activeServer.getProviderUrl()));
 
             // CONNECT TO NEW ACTIVE SERVER WITH A 2 SECONDS PERIOD.
             connect(2);   

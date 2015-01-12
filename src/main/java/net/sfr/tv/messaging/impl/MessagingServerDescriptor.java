@@ -13,29 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.model;
+package net.sfr.tv.messaging.impl;
 
 /**
- * JNDI server URI.
+ * Messaging server URI.
  * 
- * @author matthieu.chaplin@sfr.com.chaplin@sfr.com
+ * @author matthieu.chaplin@sfr.com
  */
-public class JndiServerDescriptor {
+public class MessagingServerDescriptor {
  
-    private String alias;
+    public final String alias;
     
-    private String host;
+    public final String host;
     
-    private Integer port;
+    public final Integer jndiPort;
     
-    public JndiServerDescriptor(String alias, String host, Integer port) {
+    public final Integer hqTransportPort;
+    
+    public MessagingServerDescriptor(final String alias, final String host, final Integer jndiPort, final Integer hqTransportPort) {
         this.alias = alias;
         this.host = host;
-        this.port = port;
-    }
-
-    public String getAlias() {
-        return alias;
+        this.jndiPort = jndiPort;
+        this.hqTransportPort = hqTransportPort;
     }
     
     /**
@@ -44,20 +43,18 @@ public class JndiServerDescriptor {
      * @return 
      */
     public String getProviderUrl() {
-        return "jnp://".concat(host).concat(":").concat(port.toString());
+        return "jnp://".concat(host).concat(":").concat(jndiPort.toString());
     }
 
     @Override
     public String toString() {
-        return "JNDI provider : ".concat(alias).concat(" -> URL : ").concat(getProviderUrl());
+        return "Messaging provider : ".concat(alias).concat(" -> URL : ").concat(getProviderUrl());
     }
-    
-    
 
     @Override
     public boolean equals(Object obj) {
-        if (JndiServerDescriptor.class.isAssignableFrom(obj.getClass())) {
-            return ((JndiServerDescriptor) obj).getProviderUrl().compareTo(getProviderUrl()) == 0 ? true : false;
+        if (MessagingServerDescriptor.class.isAssignableFrom(obj.getClass())) {
+            return ((MessagingServerDescriptor) obj).getProviderUrl().compareTo(getProviderUrl()) == 0;
         } else {
             return super.equals(obj);
         }
@@ -66,7 +63,7 @@ public class JndiServerDescriptor {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (host != null ? host.hashCode() : 0) + (port != null ? port.hashCode() : 0);
+        hash += (host != null ? host.hashCode() : 0) + (jndiPort != null ? jndiPort.hashCode() : 0);
         return hash;
     }
 }

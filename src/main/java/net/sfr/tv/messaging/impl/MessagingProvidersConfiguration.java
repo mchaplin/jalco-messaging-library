@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.model;
+package net.sfr.tv.messaging.impl;
 
+import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -27,9 +28,9 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu
  */
-public class JndiProviderConfiguration {
+public class MessagingProvidersConfiguration {
  
-    private static final Logger LOGGER = Logger.getLogger(JndiProviderConfiguration.class.getName());
+    private static final Logger logger = Logger.getLogger(MessagingProvidersConfiguration.class.getName());
     
     private Credentials credentials;
     
@@ -37,9 +38,9 @@ public class JndiProviderConfiguration {
     
     private Set<String> groups = new HashSet<String>();
     
-    private Map<String, Set<JndiServerDescriptor>> serversGroups;
+    private Map<String, Set<MessagingServerDescriptor>> serversGroups;
     
-    public JndiProviderConfiguration(Properties props, String service) {
+    public MessagingProvidersConfiguration(Properties props, String service) {
         
         String[] sGroups = props.getProperty((service != null ? service.concat(".") : "").concat("config.groups"), "").split("\\,");
 
@@ -47,41 +48,42 @@ public class JndiProviderConfiguration {
         String keyPrefix;
         Set<String> keys = props.stringPropertyNames();
         
-        JndiServerDescriptor server;
+        MessagingServerDescriptor server;
 
-        serversGroups = new HashMap<String, Set<JndiServerDescriptor>>();
+        serversGroups = new HashMap<String, Set<MessagingServerDescriptor>>();
         
         for (String group : sGroups) {
-            LOGGER.debug("Group : " + group);
+            logger.debug("Group : " + group);
             groups.add(group);
             
             group = !group.equals("") ? group : "default";
             keyPrefix = service != null && service.trim().length() != 0 ? service.concat(".").concat(group) : group;
             
-            LOGGER.debug("Key prefix : " + keyPrefix);
+            logger.debug("Key prefix : " + keyPrefix);
             
             // AWFUL PARSING
             for (String key : keys) {
                 if (key.startsWith(keyPrefix)) {
                     serverAlias = (service == null ? key.split("\\.")[3] : key.split("\\.")[4]);
-                    LOGGER.debug("Server alias : " + serverAlias);
+                    logger.debug("Server alias : " + serverAlias);
                     
                     if (serverAlias.equals("preferred")) {
                         preferredServer = props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias));
                     } else {
                         
                         if (serversGroups.get(group) == null) {
-                            serversGroups.put(group, new HashSet<JndiServerDescriptor>());
+                            serversGroups.put(group, new HashSet<MessagingServerDescriptor>());
                         }
 
-                        server = new JndiServerDescriptor(
+                        server = new MessagingServerDescriptor(
                             serverAlias,
                             props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".host")),
-                            Integer.valueOf(props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".port"))));
+                            Integer.valueOf(props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".port"))),
+                            Integer.valueOf(props.getProperty(keyPrefix.concat(".hqtransport.server.").concat(serverAlias).concat(".port"))));
 
                         if (!serversGroups.get(group).contains(server)) {
                             serversGroups.get(group).add(server);    
-                            LOGGER.info(server.toString());
+                            logger.info(server.toString());
                         }
                     }
                 }
@@ -95,11 +97,11 @@ public class JndiProviderConfiguration {
         return credentials;
     }
 
-    public Map<String, Set<JndiServerDescriptor>> getServersGroup() {
+    public Map<String, Set<MessagingServerDescriptor>> getServersGroup() {
         return serversGroups;
     }
     
-    public Set<JndiServerDescriptor> getServersGroup(String name) {
+    public Set<MessagingServerDescriptor> getServersGroup(String name) {
         return serversGroups.get(name);
     }
 

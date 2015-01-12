@@ -4,7 +4,7 @@
 
   <groupId>net.sfr.tv</groupId>
   <artifactId>jalco</artifactId>
-  <version>1.0.6</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Jalco JMS Connect Library</name>
@@ -29,6 +29,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <dependency.hornetq.version>2.3.19.Final</dependency.hornetq.version>
   </properties>
   
   <licenses>
@@ -49,6 +50,11 @@
       <groupId>org.jboss.javaee</groupId>
       <artifactId>jboss-jms-api</artifactId>
       <version>1.1.0.GA</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hornetq</groupId>  
+      <artifactId>hornetq-core-client</artifactId>  
+      <version>${dependency.hornetq.version}</version>
     </dependency>
     <!--<dependency>
       <groupId>org.pacesys</groupId>

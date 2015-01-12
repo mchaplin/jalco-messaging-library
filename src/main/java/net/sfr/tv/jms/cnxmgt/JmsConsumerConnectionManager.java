@@ -22,10 +22,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
-import net.sfr.tv.jms.context.InboundJmsContext;
-import net.sfr.tv.jms.context.JmsSubscription;
-import net.sfr.tv.jms.model.JmsSubscriptionDescriptor;
-import net.sfr.tv.jms.model.JndiServerDescriptor;
+import net.sfr.tv.jms.context.ConsumerJmsContext;
+import net.sfr.tv.jms.context.JmsSubscriptionContext;
+import net.sfr.tv.messaging.api.ConsumerConnectionManager;
+import net.sfr.tv.messaging.api.SubscriptionDescriptor;
+import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
@@ -33,17 +34,17 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu
  */
-public class InboundConnectionManager extends AbstractConnectionManager {
+public class JmsConsumerConnectionManager extends JmsConnectionManager implements ConsumerConnectionManager {
     
-    private static final Logger LOGGER = Logger.getLogger(InboundConnectionManager.class);
+    private static final Logger logger = Logger.getLogger(JmsConsumerConnectionManager.class);
     
     /** TODO : Add support for a dedicated listener per subscription. JMS2 supports multiple listener instance.*/
-    private MessageListener listener;
+    private final MessageListener listener;
     
     /** Allows to keep tracks of subscriptions during a reconnection */
-    protected Set<JmsSubscriptionDescriptor> previousSubscriptions;
+    protected Set<SubscriptionDescriptor> previousSubscriptions;
     
-    public InboundConnectionManager(String name, Set<JndiServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials, MessageListener listener) {
+    public JmsConsumerConnectionManager(String name, Set<MessagingServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials, MessageListener listener) {
         super(name, servers, preferredServer, clientId, cnxFactoryJndiName, credentials);
         this.listener = listener;
     }
@@ -54,8 +55,8 @@ public class InboundConnectionManager extends AbstractConnectionManager {
      * @param metadata  Subscription metadata.
      * @param delay     Periodic attempts delay.
      */
-    public final void subscribe(JmsSubscriptionDescriptor metadata, long delay) {
-        ScheduledFuture<InboundJmsContext> futureContext = null;
+    public final void subscribe(SubscriptionDescriptor metadata, long delay) {
+        ScheduledFuture<ConsumerJmsContext> futureContext = null;
         SubscribeTask ct;
         boolean initConnect = true;
         try {
@@ -67,22 +68,22 @@ public class InboundConnectionManager extends AbstractConnectionManager {
             }
             
         } catch (InterruptedException ex) {
-            LOGGER.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage(), ex);
         } catch (ExecutionException ex) {
-            LOGGER.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage(), ex);
         }
     }
     
-    public final void subscribe(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionBaseName, String selector) {
-        subscribe(new JmsSubscriptionDescriptor(destination, isTopicSubscription, isDurableSubscription, subscriptionBaseName, selector), 2);
-    }
+    /*public final void subscribe(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionBaseName, String selector) {
+        subscribe(new SubscriptionDescriptor(destination, isTopicSubscription, isDurableSubscription, subscriptionBaseName, selector), 2);
+    }*/
 
     @Override
     public void disconnect() {
         
         // UNSUBSCRIBE
-        if (((InboundJmsContext) context).getSubscriptions() != null) {
-            for (JmsSubscription subscription : ((InboundJmsContext) context).getSubscriptions()) {
+        if (((ConsumerJmsContext) context).getSubscriptions() != null) {
+            for (JmsSubscriptionContext subscription : ((ConsumerJmsContext) context).getSubscriptions()) {
                 unsubscribe(subscription, context.getSession());
             }   
         }
@@ -95,29 +96,29 @@ public class InboundConnectionManager extends AbstractConnectionManager {
     @Override
     public void onException(JMSException jmse) {
         
-        LOGGER.warn("onException : ".concat(jmse.getMessage()));
+        logger.warn("onException : ".concat(jmse.getMessage()));
         
         if (jmse.getMessage().toUpperCase().indexOf("DISCONNECTED") != -1) {
             
             // KEEP TRACK OF PREVIOUS SUBSCRIPTIONS METADATA
-            previousSubscriptions = new HashSet<JmsSubscriptionDescriptor>();
-            for (JmsSubscription subscription : ((InboundJmsContext) context).getSubscriptions()) {
-                previousSubscriptions.add(subscription.getMetadata());
+            previousSubscriptions = new HashSet<SubscriptionDescriptor>();
+            for (JmsSubscriptionContext subscription : ((ConsumerJmsContext) context).getSubscriptions()) {
+                previousSubscriptions.add(subscription.getDescriptor());
             }
 
             // RECONNECT
             super.onException(jmse);
 
             // RESUME SUBSCRIPTION OVER NEW ACTIVE SERVER
-            for (JmsSubscriptionDescriptor meta : previousSubscriptions) {
+            for (SubscriptionDescriptor meta : previousSubscriptions) {
                 subscribe(meta, 5);
             }
 
             try {
                 start();
             } catch (JMSException ex) {
-                LOGGER.error("Unable to start connection !", ex);
-                for (JmsSubscription subscription : ((InboundJmsContext) context).getSubscriptions()) {
+                logger.error("Unable to start connection !", ex);
+                for (JmsSubscriptionContext subscription : ((ConsumerJmsContext) context).getSubscriptions()) {
                     unsubscribe(subscription, context.getSession());
                 }
             }

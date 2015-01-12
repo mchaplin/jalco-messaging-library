@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 matthieu.
+ * Copyright 2015 matthieu.chaplin@sfr.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.model;
+package net.sfr.tv.messaging.api;
 
 /**
  *
- * @author matthieu
+ * @author matthieu.chaplin@sfr.com
  */
-public class JmsProviderConfiguration {
+public interface ConsumerConnectionManager extends ConnectionManager {
+    
+    void subscribe(SubscriptionDescriptor metadata, long delay);
+    
+    //void subscribe(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionBaseName, String selector);
     
 }

@@ -26,38 +26,38 @@ import javax.jms.Topic;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.context.InboundJmsContext;
+import net.sfr.tv.jms.context.ConsumerJmsContext;
 import net.sfr.tv.jms.context.JmsContext;
-import net.sfr.tv.jms.context.JmsSubscription;
-import net.sfr.tv.jms.model.JmsSubscriptionDescriptor;
+import net.sfr.tv.jms.context.JmsSubscriptionContext;
+import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class SubscribeTask implements Callable<InboundJmsContext> {
+public class SubscribeTask implements Callable<ConsumerJmsContext> {
 
-    private static final Logger LOGGER = Logger.getLogger(SubscribeTask.class);
+    private static final Logger logger = Logger.getLogger(SubscribeTask.class);
     
     //private AbstractConnectionManager parent;
     
-    private JmsSubscriptionDescriptor metadata;
+    private final SubscriptionDescriptor metadata;
     
-    private InboundJmsContext context;
+    private final ConsumerJmsContext context;
     
-    private MessageListener listener;
+    private final MessageListener listener;
     
-    public SubscribeTask(JmsContext context, JmsSubscriptionDescriptor metadata, MessageListener listener) {
-        this.context = new InboundJmsContext(context.getJndiContext(), context.getConnection(), context.getSession());
-        this.metadata = metadata;
+    public SubscribeTask(JmsContext context, SubscriptionDescriptor descriptor, MessageListener listener) {
+        this.context = new ConsumerJmsContext(context.getJndiContext(), context.getConnection(), context.getSession());
+        this.metadata = descriptor;
         this.listener = listener;
     }
     
     @Override
-    public InboundJmsContext call() throws Exception {
+    public ConsumerJmsContext call() throws Exception {
         
-        LOGGER.info("Trying to subscribe to ".concat(metadata.toString()));
+        logger.info("Trying to subscribe to ".concat(metadata.toString()));
         
         try {
 
@@ -68,13 +68,13 @@ public class SubscribeTask implements Callable<InboundJmsContext> {
             if (dst != null) {
                 consumer = createSubscription(metadata.isIsTopicSubscription() ? (Topic) dst : (Queue) dst, context.getSession(), metadata.isIsTopicSubscription(), metadata.getSubscriptionName(), metadata.getSelector());
                 //jmsSubscriptions.add(new JmsSubscription(metadata, subscription, dst, consumer));
-                context.addSubscription(new JmsSubscription(metadata, metadata.getSubscriptionName(), dst, consumer));
+                context.addSubscription(new JmsSubscriptionContext(metadata, metadata.getSubscriptionName(), dst, consumer));
 
                 consumer.setMessageListener(listener);
             }
 
         } catch (ResourceInitializerException rie) {
-            LOGGER.error("Error while attempting to create a JMS subscription : ".concat(rie.getMessage()));
+            logger.error("Error while attempting to create a JMS subscription : ".concat(rie.getMessage()));
             return context;
         }
         
@@ -101,7 +101,7 @@ public class SubscribeTask implements Callable<InboundJmsContext> {
                 dst = (Queue) ctx.lookup(destination);
             }
         } catch (NamingException ex) {
-            LOGGER.error("JNDI lookup failed for destination ".concat(destination).concat(" ! "));
+            logger.error("JNDI lookup failed for destination ".concat(destination).concat(" ! "));
         }
 
         return dst;
@@ -130,22 +130,22 @@ public class SubscribeTask implements Callable<InboundJmsContext> {
                 Topic topic = (Topic) dst;
                 try {
                     if (selector != null && !selector.trim().equals("")) {
-                        LOGGER.info("Creating a durable Topic subscription to ".concat(topic.getTopicName()).concat(" with filter : ").concat(selector));
+                        logger.info("Creating a durable Topic subscription to ".concat(topic.getTopicName()).concat(" with filter : ").concat(selector));
                         // Create a subscriber with noLocal 'flag' : Don't consume messages we would 'potentially' publish
                         consumer = session.createDurableSubscriber(topic, subscriptionName, selector, true);
                     } else {
-                        LOGGER.info("Creating a durable Topic subscription to ".concat(topic.getTopicName()));
+                        logger.info("Creating a durable Topic subscription to ".concat(topic.getTopicName()));
                         consumer = session.createDurableSubscriber(topic, subscriptionName);
                     }
                 } catch (javax.jms.IllegalStateException ex) {
                     // Subscription already exists, consumer connecting back from a dirty disconnect
-                    LOGGER.error(ex.getMessage(), ex);
+                    logger.error(ex.getMessage(), ex);
                     session.unsubscribe(subscriptionName);
                     return createSubscription(topic, session, isTopicSubscription, subscriptionName, selector);
                 }
 
             } else {
-                LOGGER.info("Creating a Queue consumer to ".concat(((Queue) dst).getQueueName()));
+                logger.info("Creating a Queue consumer to ".concat(((Queue) dst).getQueueName()));
                 consumer = session.createConsumer(dst);
             }
 

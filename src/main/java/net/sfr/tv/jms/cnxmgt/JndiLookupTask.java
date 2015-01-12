@@ -20,7 +20,7 @@ import java.util.concurrent.Callable;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import net.sfr.tv.jms.model.JndiServerDescriptor;
+import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import org.apache.log4j.Logger;
 
 /**
@@ -29,11 +29,11 @@ import org.apache.log4j.Logger;
  */
 public class JndiLookupTask implements Callable<Context> {
 
-    private static final Logger LOGGER = Logger.getLogger(JndiLookupTask.class);
+    private static final Logger logger = Logger.getLogger(JndiLookupTask.class);
     
-    private JndiServerDescriptor jndiServer;
+    private MessagingServerDescriptor jndiServer;
     
-    public JndiLookupTask(JndiServerDescriptor jndiServer) {
+    public JndiLookupTask(MessagingServerDescriptor jndiServer) {
         this.jndiServer = jndiServer;
     }
     
@@ -50,7 +50,7 @@ public class JndiLookupTask implements Callable<Context> {
         try {
             ctx = new InitialContext(props);
         } catch (NamingException ex) {
-            LOGGER.error("JNDI Context initialization failure ! ", ex);
+            logger.error("JNDI Context initialization failure ! ", ex);
         }
         return ctx;
     }

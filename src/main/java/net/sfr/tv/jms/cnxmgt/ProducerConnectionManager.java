@@ -22,8 +22,8 @@ import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.naming.NamingException;
-import net.sfr.tv.jms.model.JndiServerDescriptor;
-import net.sfr.tv.jms.context.OutboundJmsContext;
+import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
+import net.sfr.tv.jms.context.ProducerJmsContext;
 import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
@@ -31,17 +31,17 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu
  */
-public class OutboundConnectionManager extends AbstractConnectionManager {
+public class ProducerConnectionManager extends JmsConnectionManager {
  
-    private static final Logger LOGGER = Logger.getLogger(OutboundConnectionManager.class);
+    private static final Logger logger = Logger.getLogger(ProducerConnectionManager.class);
     
-    public OutboundConnectionManager(String name, Set<JndiServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials) {
+    public ProducerConnectionManager(String name, Set<MessagingServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials) {
         super(name, servers, preferredServer, clientId, cnxFactoryJndiName, credentials);
         
         connect(2);
     }
     
-    public OutboundJmsContext createProducer(String destination) {
+    public ProducerJmsContext createProducer(String destination) {
         
         Session session;
         MessageProducer producer;
@@ -61,19 +61,19 @@ public class OutboundConnectionManager extends AbstractConnectionManager {
             // Set TTL, afterwards message will be moved to an expiry queue
             producer.setTimeToLive(60 * 60 * 1000);
             
-            LOGGER.info("Destination : ".concat(destination).concat(" : allocating a JMS producer."));
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(" Configuration : ");
-                LOGGER.debug("\t Delivery Mode : " + producer.getDeliveryMode());
-                LOGGER.debug("\t TTL : " + producer.getTimeToLive());
-                LOGGER.debug("\t Message ID ? " + !producer.getDisableMessageID());
-                LOGGER.debug("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
+            logger.info("Destination : ".concat(destination).concat(" : allocating a JMS producer."));
+            if (logger.isDebugEnabled()) {
+                logger.debug(" Configuration : ");
+                logger.debug("\t Delivery Mode : " + producer.getDeliveryMode());
+                logger.debug("\t TTL : " + producer.getTimeToLive());
+                logger.debug("\t Message ID ? " + !producer.getDisableMessageID());
+                logger.debug("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
             }
          
-            return new OutboundJmsContext(getName(), context.getJndiContext(), context.getConnection(), session, producer);
+            return new ProducerJmsContext(getName(), context.getJndiContext(), context.getConnection(), session, producer);
             
         } catch (NamingException | JMSException ex) {
-            LOGGER.error("Unable to create connection upon destination : ".concat(destination).concat(" ! Cause : ").concat(ex.getMessage()));
+            logger.error("Unable to create connection upon destination : ".concat(destination).concat(" ! Cause : ").concat(ex.getMessage()));
             return null;
         }
     }
