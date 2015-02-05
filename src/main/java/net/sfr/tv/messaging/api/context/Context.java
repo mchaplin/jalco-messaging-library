@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2014 matthieu.chaplin@sfr.com.
+ * Copyright 2015 matthieu.chaplin@sfr.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.messaging.api;
-
-import javax.jms.JMSException;
-import javax.jms.Session;
-import net.sfr.tv.jms.context.JmsSubscriptionContext;
-import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
+package net.sfr.tv.messaging.api.context;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public interface ConnectionManager {
+public abstract class Context<T> {
     
-    void lookup(MessagingServerDescriptor jndiServer, long delay);
+    public T session;
     
-    void connect(long delay);
-    
-    void start() throws Exception;
-    
-    void unsubscribe(JmsSubscriptionContext subscription, Session session);
-    
-    void disconnect();
-    
-    void onException(JMSException jmse);
+    public abstract T getSession();
     
 }

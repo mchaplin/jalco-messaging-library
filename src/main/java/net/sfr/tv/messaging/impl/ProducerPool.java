@@ -13,55 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.cnxmgt.pool;
+package net.sfr.tv.messaging.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
-import javax.jms.JMSException;
 import net.sfr.tv.api.NamedObject;
-import net.sfr.tv.jms.cnxmgt.ProducerConnectionManager;
-import net.sfr.tv.jms.context.ProducerJmsContext;
-import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
-import net.sfr.tv.model.Credentials;
+import net.sfr.tv.messaging.api.MessageProducer;
+import net.sfr.tv.messaging.api.connection.ProducerConnectionManager;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class MessageProducerPool implements NamedObject {
+public abstract class ProducerPool implements NamedObject {
 
-    private static final Logger logger = Logger.getLogger(MessageProducerPool.class.getName());
+    private final Map<String, BlockingDeque<MessageProducer>> pool =  new HashMap<>(); // TODO : Synchronize access ?
     
-    private final String name;
+    protected static final Logger logger = Logger.getLogger(ProducerPool.class.getName());
     
-    private final Queue<ProducerConnectionManager> connectionManagers;
+    protected String name;
     
-    private final Integer capacity = 10;
+    protected Queue<ProducerConnectionManager> connectionManagers;
     
-    private Map<String, BlockingDeque<ProducerJmsContext>> pool =  new HashMap<String, BlockingDeque<ProducerJmsContext>>(); // TODO : Synchronize access ?
+    protected final Integer capacity = 10;
     
-    public MessageProducerPool(
-            String name, 
-            Set<MessagingServerDescriptor> servers, 
-            String preferredServer, 
-            String clientId, 
-            String cnxFactoryJndiName, 
-            Credentials credentials,
+    public ProducerPool(
+            String name,
             Integer connections) {
                 
         this.name = name;
-        ProducerConnectionManager ocm;
-        connectionManagers = new ArrayBlockingQueue<ProducerConnectionManager>(connections);
-        for (int i=0 ; i<connections ; i++) {
-            ocm = new ProducerConnectionManager(name.concat("-jms-pool-").concat(String.valueOf(i)), servers, preferredServer, clientId.concat("-").concat(String.valueOf(i)), cnxFactoryJndiName, credentials);
-            connectionManagers.add(ocm);
-        }
+        connectionManagers = new ArrayBlockingQueue<>(connections);
     }
     
     /*public getSize() {
@@ -73,25 +59,25 @@ public class MessageProducerPool implements NamedObject {
     }
     
     //@Override
-    private ProducerJmsContext create(String pk) {
+    private MessageProducer create(String pk) {
         
         ProducerConnectionManager ocm = connectionManagers.poll();
         if (ocm == null) {
             return null;
         }
-        ProducerJmsContext ret = ocm.createProducer(pk);
+        MessageProducer ret = ocm.createProducer(pk);
         connectionManagers.add(ocm);
         
         return ret;
     }
     
     
-    public ProducerJmsContext borrow(String key) {
+    public MessageProducer borrow(String key) {
         
-        ProducerJmsContext ret;
+        MessageProducer ret;
         
         if (pool.containsKey(key)) {
-            BlockingDeque<ProducerJmsContext> deck = pool.get(key);
+            BlockingDeque<MessageProducer> deck = pool.get(key);
             if (deck.isEmpty()) {
                 if (deck.size() < capacity) {
                     return create(key);
@@ -103,17 +89,18 @@ public class MessageProducerPool implements NamedObject {
             
         } else {
             ret = create(key);
-            BlockingDeque<ProducerJmsContext> deck = new LinkedBlockingDeque<ProducerJmsContext>();
+            BlockingDeque<MessageProducer> deck = new LinkedBlockingDeque<>();
             pool.put(key, deck);
             return ret;
         }
     }
     
-    public void release(String key, ProducerJmsContext instance) {
+    //public void release(String key, PooledObject<T> instance) {
+    public void release(String key, MessageProducer instance) {
         pool.get(key).addLast(instance);
     }
     
-    public void invalidate(String key, ProducerJmsContext instance) {
+    public void invalidate(String key, MessageProducer instance) {
         
         logger.info("Invalidating connection toward destination : ".concat(key));
         
@@ -121,14 +108,14 @@ public class MessageProducerPool implements NamedObject {
             return;
         }
          
-        for (BlockingDeque<ProducerJmsContext> deck : pool.values()) {
-            for (ProducerJmsContext ctx : deck) {
+        for (BlockingDeque<MessageProducer> deck : pool.values()) {
+            for (MessageProducer ctx : deck) {
                 if (ctx.getParentName().equals(instance.getParentName())) {
-                    try {
-                        instance.getProducer().close();
-                    } catch (JMSException ex) {
+                    //try {
+                        instance.close();
+                    /*} catch (JMSException ex) {
                         logger.error(ex.getMessage());
-                    }
+                    }*/
                     deck.remove(ctx);
                 }
             }
@@ -144,14 +131,14 @@ public class MessageProducerPool implements NamedObject {
     
     private void shutdownProducers(ProducerConnectionManager ocm) {
         
-        for (BlockingDeque<ProducerJmsContext> deck : pool.values()) {
-            for (ProducerJmsContext ctx : deck) {
+        for (BlockingDeque<MessageProducer> deck : pool.values()) {
+            for (MessageProducer ctx : deck) {
                 if (ctx.getParentName().equals(ocm.getName())) {
-                    try {
-                        ctx.getProducer().close();
-                    } catch (JMSException ex) {
+                    //try {
+                        ctx.close();
+                    /*} catch (JMSException ex) {
                         logger.error(ex.getMessage());
-                    }
+                    }*/
                     deck.remove(ctx);
                 }
             }

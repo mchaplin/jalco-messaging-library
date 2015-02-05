@@ -18,13 +18,14 @@ package net.sfr.tv.messaging.impl;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import net.sfr.tv.messaging.api.connection.ConnectionManager;
 import net.sfr.tv.model.Credentials;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public abstract class AbstractConnectionManager {
+public abstract class AbstractConnectionManager implements ConnectionManager {
     
     protected final String name;
     

@@ -18,7 +18,7 @@ package net.sfr.tv.hornetq;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import net.sfr.tv.jms.cnxmgt.JndiLookupTask;
+import net.sfr.tv.jms.cnxmgt.tasks.JndiLookupTask;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import org.apache.log4j.Logger;
 import org.hornetq.api.core.TransportConfiguration;

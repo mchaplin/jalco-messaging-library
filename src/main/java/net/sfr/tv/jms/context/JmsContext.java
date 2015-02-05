@@ -32,11 +32,10 @@ import javax.naming.Context;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class JmsContext {
+public class JmsContext extends net.sfr.tv.messaging.api.context.Context<Session> {
 
     private Context jndiContext;
     private Connection cnx = null;
-    private final Session session;
     
     public JmsContext(Context jndiContext, Connection cnx, Session session) {
         this.jndiContext = jndiContext;
@@ -59,6 +58,4 @@ public class JmsContext {
     public Session getSession() {
         return session;
     }
-    
-
 }

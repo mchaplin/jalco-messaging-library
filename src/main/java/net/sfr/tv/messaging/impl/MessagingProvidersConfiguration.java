@@ -15,7 +15,6 @@
  */
 package net.sfr.tv.messaging.impl;
 
-import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,13 +31,13 @@ public class MessagingProvidersConfiguration {
  
     private static final Logger logger = Logger.getLogger(MessagingProvidersConfiguration.class.getName());
     
-    private Credentials credentials;
+    private final Credentials credentials;
+    
+    private final Set<String> groups = new HashSet<>();
+    
+    private final Map<String, Set<MessagingServerDescriptor>> serversGroups;
     
     private String preferredServer; // TODO : By groups..
-    
-    private Set<String> groups = new HashSet<String>();
-    
-    private Map<String, Set<MessagingServerDescriptor>> serversGroups;
     
     public MessagingProvidersConfiguration(Properties props, String service) {
         
@@ -74,7 +73,7 @@ public class MessagingProvidersConfiguration {
                         if (serversGroups.get(group) == null) {
                             serversGroups.put(group, new HashSet<MessagingServerDescriptor>());
                         }
-
+                        
                         server = new MessagingServerDescriptor(
                             serverAlias,
                             props.getProperty(keyPrefix.concat(".jms.server.").concat(serverAlias).concat(".host")),

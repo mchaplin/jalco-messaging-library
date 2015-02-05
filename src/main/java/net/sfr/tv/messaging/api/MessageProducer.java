@@ -15,26 +15,23 @@
  */
 package net.sfr.tv.messaging.api;
 
+import java.util.List;
+
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public abstract class SubscriptionContext {
- 
-    protected final SubscriptionDescriptor descriptor;
+public interface MessageProducer {
+   
+    String getParentName();
     
-    protected final String subscriptionName;
+    Boolean isValid();
     
-    protected SubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName) {
-        this.descriptor = descriptor;
-        this.subscriptionName = subscriptionName;
-    }
-
-    public SubscriptionDescriptor getDescriptor() {
-        return descriptor;
-    }
-
-    public String getSubscriptionName() {
-        return subscriptionName;
-    }
+    void invalidate();
+    
+    void close();
+    
+    void sendTextMessage(List<MessageProperty> properties, String text) throws MessagingException;
+    
+    void sendBytesMessage(List<MessageProperty> properties, byte[] buffer) throws MessagingException;
 }

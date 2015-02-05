@@ -15,6 +15,8 @@
  */
 package net.sfr.tv.jms.cnxmgt;
 
+import net.sfr.tv.jms.cnxmgt.tasks.JndiLookupTask;
+import net.sfr.tv.jms.cnxmgt.tasks.ConnectTask;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
@@ -24,8 +26,6 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.naming.Context;
 import net.sfr.tv.jms.context.JmsContext;
-import net.sfr.tv.jms.context.JmsSubscriptionContext;
-import net.sfr.tv.messaging.api.ConnectionManager;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.messaging.impl.AbstractConnectionManager;
 import net.sfr.tv.model.Credentials;
@@ -35,8 +35,9 @@ import org.apache.log4j.Logger;
  * Stateful management of JMS connection, handling failover & reconnections
  * 
  * @author matthieu.chaplin@sfr.com
+ * @param <T>
  */
-public abstract class JmsConnectionManager extends AbstractConnectionManager implements ConnectionManager, ExceptionListener {
+public abstract class JmsConnectionManager<T extends JmsContext> extends AbstractConnectionManager implements ExceptionListener {
     
     private static final Logger logger = Logger.getLogger(JmsConnectionManager.class);
     
@@ -45,24 +46,25 @@ public abstract class JmsConnectionManager extends AbstractConnectionManager imp
     
     /** JMS ClientID */
     private final String clientId;
-
-    /** Currently used JMS resources */
-    protected JmsContext context;
     
     /** Current JNDI context */
     protected Context jndiContext;
+    
+    /** Currently used JMS resources */
+    protected T context;
     
     public JmsConnectionManager(final String name, final Set<MessagingServerDescriptor> servers, final String preferredServer, final String clientId, final String cnxFactoryJndiName, final Credentials credentials) {
         super(name, credentials, servers, preferredServer);
         this.clientId = clientId;
         this.cnxFactoryJndiName = cnxFactoryJndiName;
         
-        lookup(activeServer, 2);
+        lookup(activeServer, 2, TimeUnit.SECONDS);
         
         logger.info(getName().concat(" : Service provider URL : ").concat(activeServer.getProviderUrl()));
     }
     
-    public final void lookup(MessagingServerDescriptor jndiServer, long delay) {
+    @Override
+    public final void lookup(MessagingServerDescriptor jndiServer, long delay, TimeUnit tu) {
         ScheduledFuture<Context> futureContext = null;
         JndiLookupTask jlt;
         boolean initConnect = true;
@@ -70,13 +72,11 @@ public abstract class JmsConnectionManager extends AbstractConnectionManager imp
             while (futureContext == null || (jndiContext = futureContext.get()) == null) {
                 // reschedule a task
                 jlt = new JndiLookupTask(jndiServer);
-                futureContext = scheduler.schedule(jlt, initConnect ? 0 : delay, TimeUnit.SECONDS);
+                futureContext = scheduler.schedule(jlt, initConnect ? 0 : delay, tu);
                 initConnect = false;
             }
             
-        } catch (InterruptedException ex) {
-            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
-        } catch (ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         }
     }
@@ -85,15 +85,18 @@ public abstract class JmsConnectionManager extends AbstractConnectionManager imp
      * Establish a JMS connection and session.
      * 
      * @param delay     Periodic attempts delay.
+     * @param tu
+     * 
      */
-    public final void connect(long delay) {
-        ScheduledFuture<JmsContext> futureContext = null;
+    @Override
+    public final void connect(long delay, TimeUnit tu) {
+        ScheduledFuture<T> futureContext = null;
         ConnectTask ct;
         boolean initConnect = true;
         try {
             while (futureContext == null || (context = futureContext.get()) == null) {
                 // reschedule a task
-                ct = new ConnectTask(jndiContext, clientId, cnxFactoryJndiName, credentials, this);
+                ct = new ConnectTask<T>(jndiContext, clientId, cnxFactoryJndiName, credentials, this);
                 futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, TimeUnit.SECONDS);
                 initConnect = false;
             }
@@ -110,52 +113,12 @@ public abstract class JmsConnectionManager extends AbstractConnectionManager imp
      * 
      * @throws JMSException 
      */
+    @Override
     public final void start() throws JMSException {
         context.getConnection().start();
     }
     
-    /**
-     * Release a JMS subscription
-     * 
-     * @param consumer
-     * @param session
-     * @param subscriptionName 
-     */
-    public final void unsubscribe(JmsSubscriptionContext subscription, Session session) {
-
-        if (logger.isDebugEnabled()) {
-            logger.debug(getName().concat(" : About to unsubscribe : ").concat(subscription.getSubscriptionName()));
-        }
-        
-        // CLOSE CONSUMTER
-        if (subscription.getConsumer() != null) {
-            try {
-                subscription.getConsumer().close();
-            } catch (JMSException ex) {
-                logger.warn(ex.getMessage());
-            }
-
-        }
-        
-        // UNSUBSCRIBE
-        if (session != null && subscription.getDescriptor().isIsTopicSubscription() && !subscription.getDescriptor().isIsDurableSubscription()) {
-            // Unsubscribe, to prevent leaving a potential 'shadow' queue & permit reusing the same clientId later on.
-            try {
-                ((Session) session).unsubscribe(subscription.getSubscriptionName());
-                logger.info(getName().concat(" : Unsubscribed : ").concat(subscription.getSubscriptionName()));
-            } catch (JMSException ex) {
-                logger.error(getName().concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
-            }
-        }
-    }
-    
-    /**
-     * Release a connection, terminating associated resources :
-     * <ul>
-     *  <li> Subscriptions
-     *  <li> Session
-     * </ul>
-     */
+    @Override
     public void disconnect() {
       
         logger.info(getName().concat(" : Disconnecting.."));
@@ -199,11 +162,11 @@ public abstract class JmsConnectionManager extends AbstractConnectionManager imp
             }
 
             // LOOKUP NEW JNDI CONTEXT
-            lookup(activeServer, 2);
+            lookup(activeServer, 2, TimeUnit.SECONDS);
             logger.info(getName().concat(" : JNDI service provider URL : ").concat(activeServer.getProviderUrl()));
 
             // CONNECT TO NEW ACTIVE SERVER WITH A 2 SECONDS PERIOD.
-            connect(2);   
+            connect(2, TimeUnit.SECONDS);   
         }
     }
     

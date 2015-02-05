@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.cnxmgt;
+package net.sfr.tv.jms.cnxmgt.tasks;
 
 import java.util.Hashtable;
 import java.util.concurrent.Callable;

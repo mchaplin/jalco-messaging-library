@@ -16,14 +16,15 @@
 package net.sfr.tv.jms.cnxmgt;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.naming.NamingException;
+import net.sfr.tv.messaging.api.MessageProducer;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
-import net.sfr.tv.jms.context.ProducerJmsContext;
+import net.sfr.tv.messaging.api.connection.ProducerConnectionManager;
 import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
 
@@ -31,20 +32,21 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu
  */
-public class ProducerConnectionManager extends JmsConnectionManager {
+public class JmsProducerConnectionManager extends JmsConnectionManager implements ProducerConnectionManager {
  
-    private static final Logger logger = Logger.getLogger(ProducerConnectionManager.class);
+    private static final Logger logger = Logger.getLogger(JmsProducerConnectionManager.class);
     
-    public ProducerConnectionManager(String name, Set<MessagingServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials) {
+    public JmsProducerConnectionManager(String name, Set<MessagingServerDescriptor> servers, String preferredServer, String clientId, String cnxFactoryJndiName, Credentials credentials) {
         super(name, servers, preferredServer, clientId, cnxFactoryJndiName, credentials);
         
-        connect(2);
+        connect(2, TimeUnit.SECONDS);
     }
     
-    public ProducerJmsContext createProducer(String destination) {
+    @Override
+    public MessageProducer createProducer(String destination) {
         
         Session session;
-        MessageProducer producer;
+        javax.jms.MessageProducer producer;
         
         try {
             
@@ -70,7 +72,7 @@ public class ProducerConnectionManager extends JmsConnectionManager {
                 logger.debug("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
             }
          
-            return new ProducerJmsContext(getName(), context.getJndiContext(), context.getConnection(), session, producer);
+            return new JmsMessageProducer(getName(), context.getJndiContext(), context.getConnection(), session, producer);
             
         } catch (NamingException | JMSException ex) {
             logger.error("Unable to create connection upon destination : ".concat(destination).concat(" ! Cause : ").concat(ex.getMessage()));

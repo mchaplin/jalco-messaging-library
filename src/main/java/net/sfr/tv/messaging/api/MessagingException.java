@@ -19,10 +19,13 @@ package net.sfr.tv.messaging.api;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public interface ConsumerConnectionManager extends ConnectionManager {
+public class MessagingException extends Exception {
+ 
+    public MessagingException(Throwable t) {
+        super(t);
+    }
     
-    void subscribe(SubscriptionDescriptor metadata, long delay);
-    
-    //void subscribe(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionBaseName, String selector);
-    
+    public String getErrorCode() {
+        return null;
+    }
 }

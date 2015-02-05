@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 matthieu.
+ * Copyright 2015 matthieu.chaplin@sfr.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.cnxmgt.pool;
+package net.sfr.tv.messaging.api.connection;
+
+import net.sfr.tv.messaging.api.MessageProducer;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class MessageProducerPoolManager implements MessageProducerPoolManagerMBean {
-
-    private final MessageProducerPool pool;
+public interface ProducerConnectionManager {
     
-    public MessageProducerPoolManager(final MessageProducerPool pool) {
-        this.pool = pool;
-    }
+    String getName();
     
-    @Override
-    public Integer getPoolSize() {
-        return -1;
-    }
-
-    @Override
-    public String getName() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    MessageProducer createProducer(String destination);
+    
+    void disconnect();
 }

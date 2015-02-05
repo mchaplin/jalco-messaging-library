@@ -17,20 +17,33 @@ package net.sfr.tv.hornetq;
 
 import java.util.HashSet;
 import java.util.Set;
+import net.sfr.tv.messaging.api.context.ConsumerContext;
+import net.sfr.tv.messaging.api.context.Context;
+import net.sfr.tv.messaging.api.context.SubscriptionContext;
 import org.hornetq.api.core.client.ClientSession;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class HqCoreContext {
+public class HqCoreContext extends Context<ClientSession> implements ConsumerContext<SubscriptionContext> {
     
-    public final ClientSession session;
+    //private final ClientSession session;
     
-    public final Set<HqCoreSubscription> subscriptions;
+    private final Set<SubscriptionContext> subscriptions;
     
     public HqCoreContext(final ClientSession session) {
         this.session = session;
         this.subscriptions = new HashSet<>();
+    }
+
+    @Override
+    public ClientSession getSession() {
+        return session;
+    }
+
+    @Override
+    public Set<SubscriptionContext> getSubscriptions() {
+        return subscriptions;
     }
 }

@@ -16,7 +16,11 @@
 package net.sfr.tv.hornetq;
 
 import java.util.concurrent.Callable;
+import net.sfr.tv.messaging.api.MessageConsumer;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
+import net.sfr.tv.messaging.api.context.ConsumerContext;
+import net.sfr.tv.messaging.api.context.SubscriptionContext;
+import net.sfr.tv.messaging.impl.MessageConsumerImpl;
 import org.apache.log4j.Logger;
 import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.MessageHandler;
@@ -27,7 +31,7 @@ import org.hornetq.api.core.client.MessageHandler;
  */
 public class SubscribeTask implements Callable<HqCoreContext> {
 
-    private static final Logger logger = Logger.getLogger(net.sfr.tv.jms.cnxmgt.SubscribeTask.class);
+    private static final Logger logger = Logger.getLogger(SubscribeTask.class);
     
     public final HqCoreContext context;
     
@@ -44,9 +48,10 @@ public class SubscribeTask implements Callable<HqCoreContext> {
     @Override
     public HqCoreContext call() throws Exception {
         
-        ClientConsumer messageConsumer = context.session.createConsumer(descriptor.getDestination());
-        messageConsumer.setMessageHandler(msgHandler);
-        context.subscriptions.add(new HqCoreSubscription(descriptor, descriptor.getSubscriptionName(), messageConsumer));
+        ClientConsumer hqConsumer = context.session.createConsumer(descriptor.getDestination());
+        hqConsumer.setMessageHandler(msgHandler);
+        MessageConsumer<ClientConsumer> msgConsumer = new MessageConsumerImpl();
+        context.getSubscriptions().add(new SubscriptionContext(descriptor, descriptor.getSubscriptionName(), msgConsumer));
         
         return context;
     }

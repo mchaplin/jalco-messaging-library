@@ -21,8 +21,9 @@ package net.sfr.tv.messaging.api;
  * Those can be released upon shutdown by implementing the release() method.
  * 
  * @author matthieu.chaplin@sfr.com
+ * @param <T>
  */
-public interface MessageConsumer {
+public interface MessageConsumer<T> {
 
     /**
      * Returns instance name
@@ -47,4 +48,6 @@ public interface MessageConsumer {
      * Call upon client shutdown, override to free any resource.
      */
     public void release();
+    
+    public T getWrapped();
 }

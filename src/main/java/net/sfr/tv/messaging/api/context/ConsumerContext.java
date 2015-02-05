@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 matthieu.
+ * Copyright 2015 matthieu.chaplin@sfr.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.jms.cnxmgt.pool;
+package net.sfr.tv.messaging.api.context;
+
+import java.util.Set;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
+ * @param <T>
  */
-public interface MessageProducerPoolManagerMBean {
-   
-    public Integer getPoolSize(); 
+public interface ConsumerContext<T extends SubscriptionContext> {
     
-    public String getName();
-    
+    public Set<T> getSubscriptions();
 }

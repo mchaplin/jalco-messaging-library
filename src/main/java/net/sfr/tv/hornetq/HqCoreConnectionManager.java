@@ -21,14 +21,17 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.jms.JMSException;
 import javax.jms.Session;
-import net.sfr.tv.jms.context.JmsSubscriptionContext;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
-import net.sfr.tv.messaging.api.ConnectionManager;
-import net.sfr.tv.messaging.api.ConsumerConnectionManager;
+import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
+import net.sfr.tv.messaging.api.MessageProducer;
+import net.sfr.tv.messaging.api.connection.ProducerConnectionManager;
+import net.sfr.tv.messaging.api.context.SubscriptionContext;
 import net.sfr.tv.messaging.impl.AbstractConnectionManager;
 import net.sfr.tv.model.Credentials;
 import org.apache.log4j.Logger;
+import org.hornetq.api.core.HornetQException;
+import org.hornetq.api.core.client.ClientProducer;
 import org.hornetq.api.core.client.ClientSessionFactory;
 import org.hornetq.api.core.client.MessageHandler;
 
@@ -36,7 +39,7 @@ import org.hornetq.api.core.client.MessageHandler;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class HqCoreConnectionManager extends AbstractConnectionManager implements ConnectionManager, ConsumerConnectionManager {
+public class HqCoreConnectionManager extends AbstractConnectionManager implements ConsumerConnectionManager<HqCoreContext>, ProducerConnectionManager {
     
     private static final Logger logger = Logger.getLogger(HqCoreConnectionManager.class);
 
@@ -47,18 +50,39 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     
     /** Message handler instance, that process received messages */
     private final MessageHandler msgHandler;
+
+    /**
+     * Message producer mode constructor.
+     * 
+     * @param name
+     * @param credentials
+     * @param availableServers
+     * @param preferredServer 
+     */
+    public HqCoreConnectionManager(final String name, final Credentials credentials, final Set<MessagingServerDescriptor> availableServers, final String preferredServer) {
+        this(name, credentials, availableServers, preferredServer, null);
+    }
     
+    /**
+     * Message consumer mode constructor.
+     * 
+     * @param name
+     * @param credentials
+     * @param availableServers
+     * @param preferredServer
+     * @param msgHandler 
+     */
     public HqCoreConnectionManager(final String name, final Credentials credentials, final Set<MessagingServerDescriptor> availableServers, final String preferredServer, final MessageHandler msgHandler) {
         super(name, credentials, availableServers, preferredServer);
         this.msgHandler = msgHandler;
         
-        lookup(activeServer, 2);
+        lookup(activeServer, 2, TimeUnit.SECONDS);
         
         logger.info("Service provider URL : ".concat(activeServer.getProviderUrl()));
     }
     
     @Override
-    public void lookup(MessagingServerDescriptor serverDescriptor, long delay) {
+    public void lookup(MessagingServerDescriptor serverDescriptor, long delay, TimeUnit tu) {
         ScheduledFuture<HqCoreContext> futureContext = null;
         HqCoreLookupTask jlt;
         boolean initConnect = true;
@@ -66,7 +90,7 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
             while (futureContext == null || (this.context = futureContext.get()) == null) {
                 // reschedule a task
                 jlt = new HqCoreLookupTask(serverDescriptor);
-                futureContext = scheduler.schedule(jlt, initConnect ? 0 : delay, TimeUnit.SECONDS);
+                futureContext = scheduler.schedule(jlt, initConnect ? 0 : delay, tu);
                 initConnect = false;
             }
             
@@ -77,7 +101,7 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     }
 
     @Override
-    public void connect(long delay) {
+    public void connect(long delay, TimeUnit tu) {
         return; // DOESN'T SEEM APPLICABLE FOR HQ CORE PROTOCOL
     }
     
@@ -90,7 +114,7 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
      * @param delay     Periodic attempts delay.
      */
     @Override
-    public final void subscribe(SubscriptionDescriptor metadata, long delay) {
+    public final void subscribe(SubscriptionDescriptor metadata, long delay, TimeUnit tu) {
         ScheduledFuture<HqCoreContext> futureContext = null;
         SubscribeTask ct;
         boolean initConnect = true;
@@ -98,7 +122,7 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
             while (futureContext == null || (this.context = futureContext.get()) == null) {
                 // reschedule a task
                 ct = new SubscribeTask(this.context, metadata, msgHandler);
-                futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, TimeUnit.SECONDS);
+                futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, tu);
                 initConnect = false;
             }
             
@@ -116,7 +140,7 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     }
     
     @Override
-    public void unsubscribe(JmsSubscriptionContext subscription, Session session) {
+    public void unsubscribe(HqCoreContext context, SubscriptionContext subscription) {
         logger.warn("Unimplemeted method : unsubscribe(JMSException jmse) !");
     }
 
@@ -131,7 +155,21 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     public void onException(JMSException jmse) {
         logger.warn("Unimplemeted method : onException(JMSException jmse) !");
     }
-    
-    
-    
+
+    @Override
+    public String getName() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public MessageProducer createProducer(String destination) {
+        try {
+            logger.debug("Creating producer bound to : " + destination);
+            ClientProducer innerProducer = context.session.createProducer(destination);
+            return new HqCoreMessageProducer(context.session, innerProducer);
+        } catch (HornetQException ex) {
+            logger.error(ex);
+            return null;
+        }
+    }
 }

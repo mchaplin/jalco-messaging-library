@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.cnxmgt;
+package net.sfr.tv.jms.cnxmgt.tasks;
 
 import java.util.concurrent.Callable;
 import javax.jms.Connection;
@@ -31,8 +31,9 @@ import org.apache.log4j.Logger;
 /**
  *
  * @author matthieu.chaplin@sfr.com
+ * @param <T>
  */
-public class ConnectTask implements Callable<JmsContext> {
+public class ConnectTask<T extends JmsContext> implements Callable<JmsContext> {
     
     private static final Logger logger = Logger.getLogger(ConnectTask.class);
     

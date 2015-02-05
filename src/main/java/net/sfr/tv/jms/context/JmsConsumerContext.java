@@ -25,11 +25,11 @@ import javax.naming.Context;
  *
  * @author matthieu
  */
-public class ConsumerJmsContext extends JmsContext {
+public class JmsConsumerContext extends JmsContext {
     
     private Set<JmsSubscriptionContext> subscriptions = null;
     
-    public ConsumerJmsContext(Context jndiContext, Connection cnx, Session session) {
+    public JmsConsumerContext(Context jndiContext, Connection cnx, Session session) {
         super(jndiContext, cnx, session);
     }
     

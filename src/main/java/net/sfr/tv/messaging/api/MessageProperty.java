@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.hornetq;
-
-import net.sfr.tv.messaging.api.SubscriptionContext;
-import net.sfr.tv.messaging.api.SubscriptionDescriptor;
-import org.hornetq.api.core.client.ClientConsumer;
+package net.sfr.tv.messaging.api;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class HqCoreSubscription extends SubscriptionContext {
-    
-    private final ClientConsumer consumer;
-    
-    public HqCoreSubscription(final SubscriptionDescriptor descriptor, final String subscriptionName, final ClientConsumer consumer) {
-        super(descriptor, subscriptionName);
-        this.consumer = consumer;
-    }
+public class MessageProperty {
 
-    public ClientConsumer getConsumer() {
-        return consumer;
+    public enum Type {
+        STRING,
+        LONG
+    }
+    
+    public final Type type;
+    
+    public final String name;
+    
+    public final Object value;
+    
+    public MessageProperty(final Type type, final String name, final Object value) {
+        this.type = type;
+        this.name = name;
+        this.value = value;
     }
 }

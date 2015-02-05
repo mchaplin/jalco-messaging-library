@@ -15,6 +15,7 @@
  */
 package net.sfr.tv.jms.cnxmgt;
 
+import net.sfr.tv.jms.cnxmgt.tasks.SubscribeTask;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -22,9 +23,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
-import net.sfr.tv.jms.context.ConsumerJmsContext;
+import javax.jms.Session;
+import net.sfr.tv.jms.context.JmsConsumerContext;
 import net.sfr.tv.jms.context.JmsSubscriptionContext;
-import net.sfr.tv.messaging.api.ConsumerConnectionManager;
+import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
+import net.sfr.tv.messaging.api.context.SubscriptionContext;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.model.Credentials;
@@ -34,7 +37,7 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu
  */
-public class JmsConsumerConnectionManager extends JmsConnectionManager implements ConsumerConnectionManager {
+public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsumerContext> implements ConsumerConnectionManager<JmsConsumerContext> {
     
     private static final Logger logger = Logger.getLogger(JmsConsumerConnectionManager.class);
     
@@ -49,60 +52,85 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager implement
         this.listener = listener;
     }
     
-    /**
-     * Subscribe to a JMS destination.
-     * 
-     * @param metadata  Subscription metadata.
-     * @param delay     Periodic attempts delay.
-     */
-    public final void subscribe(SubscriptionDescriptor metadata, long delay) {
-        ScheduledFuture<ConsumerJmsContext> futureContext = null;
+    @Override
+    public final void subscribe(SubscriptionDescriptor descriptor, long delay, TimeUnit tu) {
+        ScheduledFuture<JmsConsumerContext> futureContext = null;
         SubscribeTask ct;
         boolean initConnect = true;
         try {
             while (futureContext == null || (context = futureContext.get()) == null) {
                 // reschedule a task
-                ct = new SubscribeTask(context, metadata, listener);
-                futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, TimeUnit.SECONDS);
+                ct = new SubscribeTask(context, descriptor, listener);
+                futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, tu);
                 initConnect = false;
             }
             
-        } catch (InterruptedException ex) {
-            logger.error(ex.getMessage(), ex);
-        } catch (ExecutionException ex) {
+        } catch (InterruptedException | ExecutionException ex) {
             logger.error(ex.getMessage(), ex);
         }
     }
     
-    /*public final void subscribe(String destination, boolean isTopicSubscription, boolean isDurableSubscription, String subscriptionBaseName, String selector) {
-        subscribe(new SubscriptionDescriptor(destination, isTopicSubscription, isDurableSubscription, subscriptionBaseName, selector), 2);
-    }*/
+    /**
+     * Release a JMS subscription
+     * 
+     * @param subscription 
+     * @param session
+     */
+    @Override
+    public final void unsubscribe(JmsConsumerContext context, SubscriptionContext subscription) {
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(getName().concat(" : About to unsubscribe : ").concat(subscription.getSubscriptionName()));
+        }
+        
+        // CLOSE CONSUMTER
+        if (subscription.getConsumer() != null) {
+            try {
+                javax.jms.MessageConsumer jmsConsumer = (javax.jms.MessageConsumer) subscription.getConsumer().getWrapped();
+                jmsConsumer.close();
+                subscription.getConsumer().release(); // UNIMPLEMENTED. PERFORMED ABOVE
+            } catch (JMSException ex) {
+                logger.warn(ex.getMessage());
+            }
+
+        }
+        
+        // UNSUBSCRIBE
+        if (context.getSession() != null && subscription.getDescriptor().isIsTopicSubscription() && !subscription.getDescriptor().isIsDurableSubscription()) {
+            // Unsubscribe, to prevent leaving a potential 'shadow' queue & permit reusing the same clientId later on.
+            try {
+                ((Session) context.getSession()).unsubscribe(subscription.getSubscriptionName());
+                logger.info(getName().concat(" : Unsubscribed : ").concat(subscription.getSubscriptionName()));
+            } catch (JMSException ex) {
+                logger.error(getName().concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause() != null ? ex.getCause().getMessage() : ""));
+            }
+        }
+    }
 
     @Override
     public void disconnect() {
         
         // UNSUBSCRIBE
-        if (((ConsumerJmsContext) context).getSubscriptions() != null) {
-            for (JmsSubscriptionContext subscription : ((ConsumerJmsContext) context).getSubscriptions()) {
-                unsubscribe(subscription, context.getSession());
+        if (((JmsConsumerContext) context).getSubscriptions() != null) {
+            for (JmsSubscriptionContext subscription : ((JmsConsumerContext) context).getSubscriptions()) {
+                unsubscribe(context, subscription);
             }   
         }
         
         super.disconnect();
     }
-    
-    
+       
 
     @Override
     public void onException(JMSException jmse) {
         
         logger.warn("onException : ".concat(jmse.getMessage()));
         
-        if (jmse.getMessage().toUpperCase().indexOf("DISCONNECTED") != -1) {
+        if (jmse.getMessage().toUpperCase().contains("DISCONNECTED")) {
             
             // KEEP TRACK OF PREVIOUS SUBSCRIPTIONS METADATA
-            previousSubscriptions = new HashSet<SubscriptionDescriptor>();
-            for (JmsSubscriptionContext subscription : ((ConsumerJmsContext) context).getSubscriptions()) {
+            previousSubscriptions = new HashSet<>();
+            for (JmsSubscriptionContext subscription : ((JmsConsumerContext) context).getSubscriptions()) {
                 previousSubscriptions.add(subscription.getDescriptor());
             }
 
@@ -111,15 +139,15 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager implement
 
             // RESUME SUBSCRIPTION OVER NEW ACTIVE SERVER
             for (SubscriptionDescriptor meta : previousSubscriptions) {
-                subscribe(meta, 5);
+                subscribe(meta, 5, TimeUnit.SECONDS);
             }
 
             try {
                 start();
             } catch (JMSException ex) {
                 logger.error("Unable to start connection !", ex);
-                for (JmsSubscriptionContext subscription : ((ConsumerJmsContext) context).getSubscriptions()) {
-                    unsubscribe(subscription, context.getSession());
+                for (JmsSubscriptionContext subscription : ((JmsConsumerContext) context).getSubscriptions()) {
+                    unsubscribe(context, subscription);
                 }
             }
         }

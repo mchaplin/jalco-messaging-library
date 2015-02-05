@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package net.sfr.tv.jms.cnxmgt;
+package net.sfr.tv.jms.cnxmgt.tasks;
 
 import java.util.concurrent.Callable;
 import javax.jms.Destination;
@@ -26,17 +26,18 @@ import javax.jms.Topic;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import net.sfr.tv.exceptions.ResourceInitializerException;
-import net.sfr.tv.jms.context.ConsumerJmsContext;
+import net.sfr.tv.jms.context.JmsConsumerContext;
 import net.sfr.tv.jms.context.JmsContext;
 import net.sfr.tv.jms.context.JmsSubscriptionContext;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
+import net.sfr.tv.messaging.impl.MessageConsumerImpl;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class SubscribeTask implements Callable<ConsumerJmsContext> {
+public class SubscribeTask implements Callable<JmsConsumerContext> {
 
     private static final Logger logger = Logger.getLogger(SubscribeTask.class);
     
@@ -44,18 +45,18 @@ public class SubscribeTask implements Callable<ConsumerJmsContext> {
     
     private final SubscriptionDescriptor metadata;
     
-    private final ConsumerJmsContext context;
+    private final JmsConsumerContext context;
     
     private final MessageListener listener;
     
     public SubscribeTask(JmsContext context, SubscriptionDescriptor descriptor, MessageListener listener) {
-        this.context = new ConsumerJmsContext(context.getJndiContext(), context.getConnection(), context.getSession());
+        this.context = new JmsConsumerContext(context.getJndiContext(), context.getConnection(), context.getSession());
         this.metadata = descriptor;
         this.listener = listener;
     }
     
     @Override
-    public ConsumerJmsContext call() throws Exception {
+    public JmsConsumerContext call() throws Exception {
         
         logger.info("Trying to subscribe to ".concat(metadata.toString()));
         
@@ -68,7 +69,7 @@ public class SubscribeTask implements Callable<ConsumerJmsContext> {
             if (dst != null) {
                 consumer = createSubscription(metadata.isIsTopicSubscription() ? (Topic) dst : (Queue) dst, context.getSession(), metadata.isIsTopicSubscription(), metadata.getSubscriptionName(), metadata.getSelector());
                 //jmsSubscriptions.add(new JmsSubscription(metadata, subscription, dst, consumer));
-                context.addSubscription(new JmsSubscriptionContext(metadata, metadata.getSubscriptionName(), dst, consumer));
+                context.addSubscription(new JmsSubscriptionContext(metadata, metadata.getSubscriptionName(), dst, new MessageConsumerImpl(null, consumer)));
 
                 consumer.setMessageListener(listener);
             }
