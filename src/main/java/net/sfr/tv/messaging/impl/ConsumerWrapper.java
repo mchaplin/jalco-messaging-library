@@ -15,56 +15,24 @@
  */
 package net.sfr.tv.messaging.impl;
 
-import net.sfr.tv.messaging.api.MessageConsumer;
-
 /**
- *
+ * Encapsulate a concrete messaging listener/handler.
+ * 
  * @author matthieu
  * @param <T>
  */
-public class MessageConsumerImpl<T> implements MessageConsumer {
-    
-    protected String name;
-    
-    protected final String[] destinations;
+public class ConsumerWrapper<T> {
     
     protected final T wrapped;
     
-    public MessageConsumerImpl() {
-        this(null, null);
-    }
-    
-    public MessageConsumerImpl(final String[] destinations) {
-        this(destinations, null);
-    }
-    
-    public MessageConsumerImpl(final String[] destinations, final T wrapped) {
-        this.name = getClass().getName();
-        this.destinations = destinations;
+    public ConsumerWrapper(final T wrapped) {
         this.wrapped = wrapped;
     }
     
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String[] getDestinations() {
-        return destinations;
-    }
-    
-    @Override
     public T getWrapped() {
         return wrapped;
     }
     
 
-    @Override
     public void release() {}
 }

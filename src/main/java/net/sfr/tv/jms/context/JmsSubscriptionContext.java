@@ -17,8 +17,9 @@ package net.sfr.tv.jms.context;
 
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import javax.jms.Destination;
-import net.sfr.tv.messaging.api.MessageConsumer;
+import javax.jms.MessageConsumer;
 import net.sfr.tv.messaging.api.context.SubscriptionContext;
+import net.sfr.tv.messaging.impl.ConsumerWrapper;
 
 /**
  * A JMS subscription is composed of :
@@ -30,11 +31,11 @@ import net.sfr.tv.messaging.api.context.SubscriptionContext;
  * 
  * @author matthieu.chaplin@sfr.com
  */
-public class JmsSubscriptionContext extends SubscriptionContext {
+public class JmsSubscriptionContext extends SubscriptionContext<MessageConsumer> {
     
     private final Destination destination;
     
-    public JmsSubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName, final Destination dst, final MessageConsumer consumer) {
+    public JmsSubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName, final Destination dst, final ConsumerWrapper<MessageConsumer> consumer) {
         super(descriptor, subscriptionName, consumer);
         this.destination = dst;
         this.consumer = consumer;

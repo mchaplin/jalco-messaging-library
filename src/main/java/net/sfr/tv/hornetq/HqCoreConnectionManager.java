@@ -19,8 +19,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import javax.jms.JMSException;
-import javax.jms.Session;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
@@ -29,9 +27,17 @@ import net.sfr.tv.messaging.api.connection.ProducerConnectionManager;
 import net.sfr.tv.messaging.api.context.SubscriptionContext;
 import net.sfr.tv.messaging.impl.AbstractConnectionManager;
 import net.sfr.tv.model.Credentials;
+/*import org.apache.activemq.api.core.ActiveMQException;
+import org.apache.activemq.api.core.client.ClientConsumer;
+import org.apache.activemq.api.core.client.ClientProducer;
+import org.apache.activemq.api.core.client.ClientSession;
+import org.apache.activemq.api.core.client.ClientSessionFactory;
+import org.apache.activemq.api.core.client.MessageHandler;*/
 import org.apache.log4j.Logger;
 import org.hornetq.api.core.HornetQException;
+import org.hornetq.api.core.client.ClientConsumer;
 import org.hornetq.api.core.client.ClientProducer;
+import org.hornetq.api.core.client.ClientSession;
 import org.hornetq.api.core.client.ClientSessionFactory;
 import org.hornetq.api.core.client.MessageHandler;
 
@@ -39,7 +45,7 @@ import org.hornetq.api.core.client.MessageHandler;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class HqCoreConnectionManager extends AbstractConnectionManager implements ConsumerConnectionManager<HqCoreContext>, ProducerConnectionManager {
+public class HqCoreConnectionManager extends AbstractConnectionManager implements ConsumerConnectionManager<HqCoreContext,ClientConsumer>, ProducerConnectionManager {
     
     private static final Logger logger = Logger.getLogger(HqCoreConnectionManager.class);
 
@@ -83,18 +89,22 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     
     @Override
     public void lookup(MessagingServerDescriptor serverDescriptor, long delay, TimeUnit tu) {
-        ScheduledFuture<HqCoreContext> futureContext = null;
+        ScheduledFuture<ClientSessionFactory> futureContext = null;
         HqCoreLookupTask jlt;
         boolean initConnect = true;
         try {
-            while (futureContext == null || (this.context = futureContext.get()) == null) {
+            while (futureContext == null || (this.sessionFactory = futureContext.get()) == null) {
                 // reschedule a task
                 jlt = new HqCoreLookupTask(serverDescriptor);
                 futureContext = scheduler.schedule(jlt, initConnect ? 0 : delay, tu);
                 initConnect = false;
             }
             
-        } catch (InterruptedException | ExecutionException ex) {
+            ClientSession session = sessionFactory.createSession();
+            logger.info("HornetQ client session created, with version " + session.getVersion());
+            this.context = new HqCoreContext(session);
+            
+        } catch (InterruptedException | ExecutionException | HornetQException ex) {
             //logger.error(ex.getMessage().concat(" : Caused by : ").concat(ex.getCause() != null ? ex.getCause().getMessage() : ""));
             logger.error(ex.getMessage(), ex);
         }
@@ -140,8 +150,13 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     }
     
     @Override
-    public void unsubscribe(HqCoreContext context, SubscriptionContext subscription) {
-        logger.warn("Unimplemeted method : unsubscribe(JMSException jmse) !");
+    public void unsubscribe(HqCoreContext context, SubscriptionContext<ClientConsumer> subscription) {
+        try {
+            context.session.close();
+            subscription.getConsumer().getWrapped().close();
+        } catch (HornetQException ex) {
+            logger.error(ex.getMessage(), ex);
+        }
     }
 
     @Override
@@ -152,11 +167,6 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     }
 
     @Override
-    public void onException(JMSException jmse) {
-        logger.warn("Unimplemeted method : onException(JMSException jmse) !");
-    }
-
-    @Override
     public String getName() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -164,9 +174,10 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     @Override
     public MessageProducer createProducer(String destination) {
         try {
-            logger.debug("Creating producer bound to : " + destination);
-            ClientProducer innerProducer = context.session.createProducer(destination);
-            return new HqCoreMessageProducer(context.session, innerProducer);
+            logger.info("Creating producer bound to : " + destination);
+            ClientSession session = sessionFactory.createSession();
+            ClientProducer innerProducer = session.createProducer(destination);
+            return new HqCoreMessageProducer(session, innerProducer);
         } catch (HornetQException ex) {
             logger.error(ex);
             return null;

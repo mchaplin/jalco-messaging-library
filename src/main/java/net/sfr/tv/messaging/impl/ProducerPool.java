@@ -50,9 +50,6 @@ public abstract class ProducerPool implements NamedObject {
         connectionManagers = new ArrayBlockingQueue<>(connections);
     }
     
-    /*public getSize() {
-    }*/
-    
     @Override
     public String getName() {
         return name;
@@ -95,27 +92,22 @@ public abstract class ProducerPool implements NamedObject {
         }
     }
     
-    //public void release(String key, PooledObject<T> instance) {
     public void release(String key, MessageProducer instance) {
         pool.get(key).addLast(instance);
     }
     
     public void invalidate(String key, MessageProducer instance) {
         
-        logger.info("Invalidating connection toward destination : ".concat(key));
-        
         if (instance == null) {
             return;
         }
+        
+        logger.info("Invalidating connection toward destination : ".concat(key));
          
         for (BlockingDeque<MessageProducer> deck : pool.values()) {
             for (MessageProducer ctx : deck) {
                 if (ctx.getParentName().equals(instance.getParentName())) {
-                    //try {
-                        instance.close();
-                    /*} catch (JMSException ex) {
-                        logger.error(ex.getMessage());
-                    }*/
+                    instance.close();
                     deck.remove(ctx);
                 }
             }

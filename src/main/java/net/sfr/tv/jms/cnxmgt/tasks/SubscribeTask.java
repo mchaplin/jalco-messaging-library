@@ -30,7 +30,7 @@ import net.sfr.tv.jms.context.JmsConsumerContext;
 import net.sfr.tv.jms.context.JmsContext;
 import net.sfr.tv.jms.context.JmsSubscriptionContext;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
-import net.sfr.tv.messaging.impl.MessageConsumerImpl;
+import net.sfr.tv.messaging.impl.ConsumerWrapper;
 import org.apache.log4j.Logger;
 
 /**
@@ -69,7 +69,7 @@ public class SubscribeTask implements Callable<JmsConsumerContext> {
             if (dst != null) {
                 consumer = createSubscription(metadata.isIsTopicSubscription() ? (Topic) dst : (Queue) dst, context.getSession(), metadata.isIsTopicSubscription(), metadata.getSubscriptionName(), metadata.getSelector());
                 //jmsSubscriptions.add(new JmsSubscription(metadata, subscription, dst, consumer));
-                context.addSubscription(new JmsSubscriptionContext(metadata, metadata.getSubscriptionName(), dst, new MessageConsumerImpl(null, consumer)));
+                context.addSubscription(new JmsSubscriptionContext(metadata, metadata.getSubscriptionName(), dst, new ConsumerWrapper(consumer)));
 
                 consumer.setMessageListener(listener);
             }

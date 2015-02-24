@@ -16,7 +16,7 @@
 package net.sfr.tv.messaging.api;
 
 /**
- * JMS subscription attributes
+ * Consumer subscription attributes. Mostly inspired from the JMS model.
  * 
  * @author matthieu.chaplin@sfr.com
  */
@@ -64,7 +64,7 @@ public class SubscriptionDescriptor {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("destination : ").append(destination)
-                .append(", JMS topic ? ").append(isTopicSubscription)
+                .append(", topic ? ").append(isTopicSubscription)
                 .append(", durable subscription ? ").append(isDurableSubscription)
                 .append(", subscription base name : ").append(subscriptionName)
                 .append(selector != null && selector.trim().length() > 0 ? ", selector : ".concat(selector) : "");

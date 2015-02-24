@@ -21,33 +21,11 @@ package net.sfr.tv.messaging.api;
  * Those can be released upon shutdown by implementing the release() method.
  * 
  * @author matthieu.chaplin@sfr.com
- * @param <T>
  */
-public interface MessageConsumer<T> {
-
-    /**
-     * Returns instance name
-     * 
-     * @return Name
-     */
-    public String getName();
-    
-    /**
-     * Set instance name
-     * 
-     * @param name  Name 
-     */
-    public void setName(String name);
-    
-    /**
-     * @return destinations associated with this listener
-     */
-    public String[] getDestinations();
+public interface MessageConsumer {
     
     /**
      * Call upon client shutdown, override to free any resource.
      */
     public void release();
-    
-    public T getWrapped();
 }

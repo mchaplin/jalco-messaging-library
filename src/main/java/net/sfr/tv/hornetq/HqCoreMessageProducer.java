@@ -20,6 +20,10 @@ import java.util.List;
 import net.sfr.tv.messaging.api.MessageProducer;
 import net.sfr.tv.messaging.api.MessageProperty;
 import net.sfr.tv.messaging.api.MessagingException;
+/*import org.apache.activemq.api.core.ActiveMQException;
+import org.apache.activemq.api.core.Message;
+import org.apache.activemq.api.core.client.ClientProducer;
+import org.apache.activemq.api.core.client.ClientSession;*/
 import org.apache.log4j.Logger;
 import org.hornetq.api.core.HornetQException;
 import org.hornetq.api.core.Message;

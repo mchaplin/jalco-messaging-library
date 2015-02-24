@@ -16,7 +16,6 @@
 package net.sfr.tv.messaging.api;
 
 /**
- *
  * @author matthieu.chaplin@sfr.com
  */
 public class MessagingException extends Exception {

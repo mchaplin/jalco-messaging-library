@@ -18,11 +18,14 @@ package net.sfr.tv.hornetq;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import net.sfr.tv.jms.cnxmgt.tasks.JndiLookupTask;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
+/*import org.apache.activemq.api.core.TransportConfiguration;
+import org.apache.activemq.api.core.client.ActiveMQClient;
+import org.apache.activemq.api.core.client.ClientSessionFactory;
+import org.apache.activemq.api.core.client.ServerLocator;
+import org.apache.activemq.core.remoting.impl.netty.NettyConnectorFactory;*/
 import org.apache.log4j.Logger;
 import org.hornetq.api.core.TransportConfiguration;
-import org.hornetq.api.core.client.ClientSession;
 import org.hornetq.api.core.client.ClientSessionFactory;
 import org.hornetq.api.core.client.HornetQClient;
 import org.hornetq.api.core.client.ServerLocator;
@@ -32,9 +35,9 @@ import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public class HqCoreLookupTask implements Callable<HqCoreContext> {
+public class HqCoreLookupTask implements Callable<ClientSessionFactory> {
 
-    private static final Logger logger = Logger.getLogger(JndiLookupTask.class);
+    private static final Logger logger = Logger.getLogger(HqCoreLookupTask.class);
     
     private final MessagingServerDescriptor serverDescriptor;
     
@@ -44,7 +47,7 @@ public class HqCoreLookupTask implements Callable<HqCoreContext> {
     }
     
     @Override
-    public HqCoreContext call() throws Exception {
+    public ClientSessionFactory call() throws Exception {
         
          Map<String,Object> map = new HashMap<>();
          map.put("host", serverDescriptor.host);
@@ -53,8 +56,6 @@ public class HqCoreLookupTask implements Callable<HqCoreContext> {
 
          ServerLocator serverLocator = HornetQClient.createServerLocatorWithoutHA(new TransportConfiguration(NettyConnectorFactory.class.getName(), map));
          ClientSessionFactory sessionFactory = serverLocator.createSessionFactory();
-         ClientSession session = sessionFactory.createSession();
-         logger.info("HornetQ client session created, with version " + session.getVersion());
-         return new HqCoreContext(session);
+         return sessionFactory;
     }
 }

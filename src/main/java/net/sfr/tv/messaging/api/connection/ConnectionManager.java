@@ -17,20 +17,39 @@
 package net.sfr.tv.messaging.api.connection;
 
 import java.util.concurrent.TimeUnit;
-import javax.jms.JMSException;
+import net.sfr.tv.messaging.api.MessagingException;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 
 /**
  * Handles messaging connections operations.
+ * Refer to concrete classes for implementation behavior.
  * 
  * @author matthieu.chaplin@sfr.com
  */
 public interface ConnectionManager {
     
+    /**
+     * Lookup a messaging server.
+     * 
+     * @param descriptor
+     * @param delay
+     * @param tu 
+     */
     void lookup(MessagingServerDescriptor descriptor, long delay, TimeUnit tu);
     
+    /**
+     * Connect to a concrete messaging ressource.
+     * 
+     * @param delay
+     * @param tu 
+     */
     void connect(long delay, TimeUnit tu);
     
+    /**
+     * Starts a consumer connection.
+     * 
+     * @throws Exception 
+     */
     void start() throws Exception;
     
     /**
@@ -40,8 +59,5 @@ public interface ConnectionManager {
      *  <li> Sessions
      * </ul>
      */
-    void disconnect();
-    
-    void onException(JMSException jmse);
-    
+    void disconnect(); 
 }

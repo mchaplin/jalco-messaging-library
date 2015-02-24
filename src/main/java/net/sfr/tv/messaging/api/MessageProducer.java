@@ -23,10 +23,19 @@ import java.util.List;
  */
 public interface MessageProducer {
    
+    /**
+     * @return Logical name of the ConnectionManager that created this instance.
+     */
     String getParentName();
     
+    /**
+     * @return Tests for producer validity.
+     */
     Boolean isValid();
     
+    /**
+     * Flag this instance as invalid, ie. not to be reused (In a pooling context)
+     */
     void invalidate();
     
     void close();

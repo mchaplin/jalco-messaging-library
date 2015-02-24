@@ -15,22 +15,23 @@
  */
 package net.sfr.tv.messaging.api.context;
 
-import net.sfr.tv.messaging.api.MessageConsumer;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
+import net.sfr.tv.messaging.impl.ConsumerWrapper;
 
 /**
  *
  * @author matthieu.chaplin@sfr.com
+ * @param <T>
  */
-public class SubscriptionContext {
+public class SubscriptionContext<T> {
  
     protected final SubscriptionDescriptor descriptor;
     
-    protected MessageConsumer consumer;
-    
     protected final String subscriptionName;
     
-    public SubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName, final MessageConsumer consumer) {
+    protected ConsumerWrapper<T> consumer;
+    
+    public SubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName, final ConsumerWrapper<T> consumer) {
         this.descriptor = descriptor;
         this.subscriptionName = subscriptionName;
         this.consumer = consumer;
@@ -44,7 +45,7 @@ public class SubscriptionContext {
         return subscriptionName;
     }
 
-    public MessageConsumer getConsumer() {
+    public ConsumerWrapper<T> getConsumer() {
         return consumer;
     }
 }

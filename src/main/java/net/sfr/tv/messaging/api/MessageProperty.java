@@ -16,7 +16,8 @@
 package net.sfr.tv.messaging.api;
 
 /**
- *
+ * A property bound to a message. (Distinct from the body part)
+ * 
  * @author matthieu.chaplin@sfr.com
  */
 public class MessageProperty {

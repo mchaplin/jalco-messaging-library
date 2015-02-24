@@ -24,8 +24,10 @@ import net.sfr.tv.messaging.api.context.Context;
  * Handles consumer-oriented operations.
  * 
  * @author matthieu.chaplin@sfr.com
+ * @param <A>
+ * @param <B>
  */
-public interface ConsumerConnectionManager<T extends Context> extends ConnectionManager {
+public interface ConsumerConnectionManager<A extends Context, B> extends ConnectionManager {
     
     /**
      * Subscribe to a JMS destination.
@@ -36,5 +38,5 @@ public interface ConsumerConnectionManager<T extends Context> extends Connection
      */
     void subscribe(SubscriptionDescriptor descriptor, long delay, TimeUnit tu);
     
-    void unsubscribe(T context, SubscriptionContext subscriptionContext);
+    void unsubscribe(A context, SubscriptionContext<B> subscriptionContext);
 }

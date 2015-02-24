@@ -22,10 +22,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.jms.JMSException;
+import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.Session;
 import net.sfr.tv.jms.context.JmsConsumerContext;
 import net.sfr.tv.jms.context.JmsSubscriptionContext;
+import net.sfr.tv.messaging.api.MessagingException;
 import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
 import net.sfr.tv.messaging.api.context.SubscriptionContext;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
@@ -37,7 +39,7 @@ import org.apache.log4j.Logger;
  *
  * @author matthieu
  */
-public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsumerContext> implements ConsumerConnectionManager<JmsConsumerContext> {
+public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsumerContext> implements ConsumerConnectionManager<JmsConsumerContext,MessageConsumer> {
     
     private static final Logger logger = Logger.getLogger(JmsConsumerConnectionManager.class);
     
@@ -73,11 +75,11 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
     /**
      * Release a JMS subscription
      * 
+     * @param context
      * @param subscription 
-     * @param session
      */
     @Override
-    public final void unsubscribe(JmsConsumerContext context, SubscriptionContext subscription) {
+    public final void unsubscribe(JmsConsumerContext context, SubscriptionContext<MessageConsumer> subscription) {
 
         if (logger.isDebugEnabled()) {
             logger.debug(getName().concat(" : About to unsubscribe : ").concat(subscription.getSubscriptionName()));
@@ -86,7 +88,7 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
         // CLOSE CONSUMTER
         if (subscription.getConsumer() != null) {
             try {
-                javax.jms.MessageConsumer jmsConsumer = (javax.jms.MessageConsumer) subscription.getConsumer().getWrapped();
+                MessageConsumer jmsConsumer = subscription.getConsumer().getWrapped();
                 jmsConsumer.close();
                 subscription.getConsumer().release(); // UNIMPLEMENTED. PERFORMED ABOVE
             } catch (JMSException ex) {
@@ -122,11 +124,11 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
        
 
     @Override
-    public void onException(JMSException jmse) {
+    public void onException(JMSException e) {
         
-        logger.warn("onException : ".concat(jmse.getMessage()));
+        logger.warn("onException : ".concat(e.getMessage()));
         
-        if (jmse.getMessage().toUpperCase().contains("DISCONNECTED")) {
+        if (e.getMessage().toUpperCase().contains("DISCONNECTED")) {
             
             // KEEP TRACK OF PREVIOUS SUBSCRIPTIONS METADATA
             previousSubscriptions = new HashSet<>();
@@ -135,7 +137,7 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
             }
 
             // RECONNECT
-            super.onException(jmse);
+            super.onException(e);
 
             // RESUME SUBSCRIPTION OVER NEW ACTIVE SERVER
             for (SubscriptionDescriptor meta : previousSubscriptions) {

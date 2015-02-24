@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.sfr.tv.messaging.api.context;
+package net.sfr.tv.hornetq;
+
+import net.sfr.tv.messaging.api.SubscriptionDescriptor;
+import net.sfr.tv.messaging.api.context.SubscriptionContext;
+import net.sfr.tv.messaging.impl.ConsumerWrapper;
+//import org.apache.activemq.api.core.client.ClientConsumer;
+import org.hornetq.api.core.client.ClientConsumer;
 
 /**
- * Messaging context. Reference a messaging session.
- * 
+ *
  * @author matthieu.chaplin@sfr.com
- * @param <T>
  */
-public abstract class Context<T> {
+public class HqCoreSubscriptionContext extends SubscriptionContext<ClientConsumer> {
     
-    public T session;
-    
-    public abstract T getSession();
-    
+    public HqCoreSubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName, final ConsumerWrapper<ClientConsumer> consumer) {
+        super(descriptor, subscriptionName, consumer);
+    }
 }

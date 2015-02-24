@@ -26,6 +26,7 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.naming.Context;
 import net.sfr.tv.jms.context.JmsContext;
+import net.sfr.tv.messaging.api.MessagingException;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.messaging.impl.AbstractConnectionManager;
 import net.sfr.tv.model.Credentials;
@@ -144,11 +145,11 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
     }
 
     @Override
-    public void onException(JMSException jmse) {
+    public void onException(JMSException e) {
         
-        logger.error(getName().concat(" : onException : ").concat(jmse.getMessage()));
+        logger.error(getName().concat(" : onException : ").concat(e.getMessage()));
         
-        if (jmse.getMessage().toUpperCase().indexOf("DISCONNECTED") != -1) {
+        if (e.getMessage().toUpperCase().contains("DISCONNECTED")) {
 
             // BLACKLIST ACTIVE SERVER
             logger.error(getName().concat(" : Active Server not available anymore ! ").concat(activeServer.getProviderUrl()));
@@ -163,7 +164,7 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
 
             // LOOKUP NEW JNDI CONTEXT
             lookup(activeServer, 2, TimeUnit.SECONDS);
-            logger.info(getName().concat(" : JNDI service provider URL : ").concat(activeServer.getProviderUrl()));
+            logger.info(getName().concat(" : service provider URL : ").concat(activeServer.getProviderUrl()));
 
             // CONNECT TO NEW ACTIVE SERVER WITH A 2 SECONDS PERIOD.
             connect(2, TimeUnit.SECONDS);   

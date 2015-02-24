@@ -20,6 +20,7 @@ import java.util.Set;
 import net.sfr.tv.messaging.api.context.ConsumerContext;
 import net.sfr.tv.messaging.api.context.Context;
 import net.sfr.tv.messaging.api.context.SubscriptionContext;
+//import org.apache.activemq.api.core.client.ClientSession;
 import org.hornetq.api.core.client.ClientSession;
 
 /**
@@ -27,8 +28,6 @@ import org.hornetq.api.core.client.ClientSession;
  * @author matthieu.chaplin@sfr.com
  */
 public class HqCoreContext extends Context<ClientSession> implements ConsumerContext<SubscriptionContext> {
-    
-    //private final ClientSession session;
     
     private final Set<SubscriptionContext> subscriptions;
     
