@@ -55,8 +55,7 @@ public abstract class ProducerPool implements NamedObject {
         return name;
     }
     
-    //@Override
-    private MessageProducer create(String pk) {
+    protected MessageProducer create(String pk) {
         
         ProducerConnectionManager ocm = connectionManagers.poll();
         if (ocm == null) {

@@ -16,6 +16,8 @@
 package net.sfr.tv.hornetq;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import net.sfr.tv.messaging.api.MessageProducer;
 import net.sfr.tv.messaging.api.connection.ProducerConnectionManager;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.messaging.impl.ProducerPool;
@@ -31,16 +33,18 @@ public class HqCoreProducerPool extends ProducerPool {
             String name, 
             Set<MessagingServerDescriptor> servers, 
             String preferredServer,
-            Credentials credentials,
-            Integer connections) {
+            Credentials credentials) {
                 
-        super(name, connections);
-        ProducerConnectionManager ocm;
+        super(name, 1);
         
-        for (int i=0 ; i<connections ; i++) {
-            ocm = new HqCoreConnectionManager(name.concat("-hqcore-pool-").concat(String.valueOf(i)), null, servers, preferredServer);
-            connectionManagers.add(ocm);
-        }
+        ProducerConnectionManager ocm = new HqCoreConnectionManager(name.concat("-hqcore-pool"), null, servers, preferredServer);
+        ocm.lookup(2, TimeUnit.SECONDS);
+        connectionManagers.add(ocm);
+        
     }
     
+    @Override
+    protected MessageProducer create(String pk) {
+        return connectionManagers.element().createProducer(pk);
+    }
 }

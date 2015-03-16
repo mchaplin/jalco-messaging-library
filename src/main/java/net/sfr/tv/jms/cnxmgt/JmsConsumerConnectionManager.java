@@ -73,6 +73,17 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
     }
     
     /**
+     * Starts message delivery for subscriptions associated to a connection.
+     * 
+     * @throws JMSException 
+     */
+    @Override
+    public final void start() throws JMSException {
+        logger.info("Starting message delivery...");
+        context.getConnection().start();
+    }
+    
+    /**
      * Release a JMS subscription
      * 
      * @param context

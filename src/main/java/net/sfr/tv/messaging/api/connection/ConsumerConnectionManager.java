@@ -38,5 +38,12 @@ public interface ConsumerConnectionManager<A extends Context, B> extends Connect
      */
     void subscribe(SubscriptionDescriptor descriptor, long delay, TimeUnit tu);
     
+    /**
+     * Starts a consumer connection.
+     * 
+     * @throws Exception 
+     */
+    void start() throws Exception;
+    
     void unsubscribe(A context, SubscriptionContext<B> subscriptionContext);
 }

@@ -21,11 +21,9 @@ import net.sfr.tv.messaging.api.MessageProducer;
  *
  * @author matthieu.chaplin@sfr.com
  */
-public interface ProducerConnectionManager {
+public interface ProducerConnectionManager extends ConnectionManager {
     
     String getName();
     
     MessageProducer createProducer(String destination);
-    
-    void disconnect();
 }

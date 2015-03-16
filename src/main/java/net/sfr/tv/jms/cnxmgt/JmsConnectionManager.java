@@ -26,7 +26,6 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.naming.Context;
 import net.sfr.tv.jms.context.JmsContext;
-import net.sfr.tv.messaging.api.MessagingException;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.messaging.impl.AbstractConnectionManager;
 import net.sfr.tv.model.Credentials;
@@ -62,6 +61,11 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
         lookup(activeServer, 2, TimeUnit.SECONDS);
         
         logger.info(getName().concat(" : Service provider URL : ").concat(activeServer.getProviderUrl()));
+    }
+
+    @Override
+    public void lookup(long delay, TimeUnit tu) {
+        this.lookup(activeServer, delay, tu);
     }
     
     @Override
@@ -107,16 +111,6 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
         } catch (ExecutionException ex) {
             logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         }
-    }
-    
-    /**
-     * Starts message delivery for subscriptions associated to a connection.
-     * 
-     * @throws JMSException 
-     */
-    @Override
-    public final void start() throws JMSException {
-        context.getConnection().start();
     }
     
     @Override

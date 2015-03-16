@@ -46,8 +46,6 @@ public abstract class AbstractConnectionManager implements ConnectionManager {
         this.availableServers = availableServers;
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         
-        // Try with 1st server. TODO : Optimize and round-robin
-        this.activeServer = availableServers.iterator().next();
         if (preferredServer != null && preferredServer.trim().length() != 0) {
             for (MessagingServerDescriptor desc : availableServers) {
                 if (desc.alias.equals(preferredServer)) {
@@ -55,6 +53,9 @@ public abstract class AbstractConnectionManager implements ConnectionManager {
                     break;
                 }
             }
+        } else {
+            // Try with 1st server. TODO : Optimize and round-robin
+            this.activeServer = availableServers.iterator().next();
         }
     }
 }

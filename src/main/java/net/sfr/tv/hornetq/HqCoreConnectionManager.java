@@ -86,6 +86,11 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
         
         logger.info("Service provider URL : ".concat(activeServer.getProviderUrl()));
     }
+
+    @Override
+    public void lookup(long delay, TimeUnit tu) {
+        this.lookup(activeServer, delay, tu);
+    }
     
     @Override
     public void lookup(MessagingServerDescriptor serverDescriptor, long delay, TimeUnit tu) {
@@ -99,12 +104,8 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
                 futureContext = scheduler.schedule(jlt, initConnect ? 0 : delay, tu);
                 initConnect = false;
             }
-            
-            ClientSession session = sessionFactory.createSession();
-            logger.info("HornetQ client session created, with version " + session.getVersion());
-            this.context = new HqCoreContext(session);
-            
-        } catch (InterruptedException | ExecutionException | HornetQException ex) {
+
+        } catch (InterruptedException | ExecutionException ex) {
             //logger.error(ex.getMessage().concat(" : Caused by : ").concat(ex.getCause() != null ? ex.getCause().getMessage() : ""));
             logger.error(ex.getMessage(), ex);
         }
@@ -112,7 +113,13 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
 
     @Override
     public void connect(long delay, TimeUnit tu) {
-        return; // DOESN'T SEEM APPLICABLE FOR HQ CORE PROTOCOL
+        try {
+            ClientSession session = sessionFactory.createSession();
+            logger.info("HornetQ client session created, with version " + session.getVersion());
+            this.context = new HqCoreContext(session);
+        } catch (HornetQException ex) {
+            logger.error(ex.getMessage(), ex);
+        }
     }
     
     // DUPLICATE CODE FROM InboundConnectionManager

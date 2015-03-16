@@ -17,7 +17,6 @@
 package net.sfr.tv.messaging.api.connection;
 
 import java.util.concurrent.TimeUnit;
-import net.sfr.tv.messaging.api.MessagingException;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 
 /**
@@ -37,6 +36,8 @@ public interface ConnectionManager {
      */
     void lookup(MessagingServerDescriptor descriptor, long delay, TimeUnit tu);
     
+    void lookup(long delay, TimeUnit tu);
+    
     /**
      * Connect to a concrete messaging ressource.
      * 
@@ -44,13 +45,6 @@ public interface ConnectionManager {
      * @param tu 
      */
     void connect(long delay, TimeUnit tu);
-    
-    /**
-     * Starts a consumer connection.
-     * 
-     * @throws Exception 
-     */
-    void start() throws Exception;
     
     /**
      * Release a connection, terminating associated resources :
