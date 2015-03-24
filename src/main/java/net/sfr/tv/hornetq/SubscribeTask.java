@@ -52,6 +52,8 @@ public class SubscribeTask implements Callable<HqCoreContext> {
         ConsumerWrapper<ClientConsumer> msgConsumer = new HqCoreConsumerWrapper(hqConsumer);
         context.getSubscriptions().add(new HqCoreSubscriptionContext(descriptor, descriptor.getSubscriptionName(), msgConsumer));
         
+        logger.debug("Subscription to : ".concat(descriptor.getDestination()).concat(" performed with handler : ").concat(msgHandler.getClass().getName()));
+        
         return context;
     }
 }

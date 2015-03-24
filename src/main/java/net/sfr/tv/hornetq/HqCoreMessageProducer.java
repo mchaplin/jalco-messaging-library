@@ -46,11 +46,6 @@ public class HqCoreMessageProducer extends HqCoreContext implements MessageProdu
         super(session);
         this.producer = producer;
     }
-    
-    @Override
-    public String getParentName() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
     @Override
     public Boolean isValid() {

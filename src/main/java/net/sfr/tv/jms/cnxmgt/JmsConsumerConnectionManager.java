@@ -80,7 +80,7 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
     @Override
     public final void start() throws JMSException {
         logger.info("Starting message delivery...");
-        context.getConnection().start();
+        context.connection.start();
     }
     
     /**
@@ -93,29 +93,28 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
     public final void unsubscribe(JmsConsumerContext context, SubscriptionContext<MessageConsumer> subscription) {
 
         if (logger.isDebugEnabled()) {
-            logger.debug(getName().concat(" : About to unsubscribe : ").concat(subscription.getSubscriptionName()));
+            logger.debug(name.concat(" : About to unsubscribe : ").concat(subscription.name));
         }
         
         // CLOSE CONSUMTER
-        if (subscription.getConsumer() != null) {
+        if (subscription.consumer != null) {
             try {
-                MessageConsumer jmsConsumer = subscription.getConsumer().getWrapped();
+                MessageConsumer jmsConsumer = subscription.consumer.getWrapped();
                 jmsConsumer.close();
-                subscription.getConsumer().release(); // UNIMPLEMENTED. PERFORMED ABOVE
+                subscription.consumer.release(); // UNIMPLEMENTED. PERFORMED ABOVE
             } catch (JMSException ex) {
                 logger.warn(ex.getMessage());
             }
-
         }
         
         // UNSUBSCRIBE
-        if (context.getSession() != null && subscription.getDescriptor().isIsTopicSubscription() && !subscription.getDescriptor().isIsDurableSubscription()) {
+        if (context.getSession() != null && subscription.descriptor.isIsTopicSubscription() && !subscription.descriptor.isIsDurableSubscription()) {
             // Unsubscribe, to prevent leaving a potential 'shadow' queue & permit reusing the same clientId later on.
             try {
-                ((Session) context.getSession()).unsubscribe(subscription.getSubscriptionName());
-                logger.info(getName().concat(" : Unsubscribed : ").concat(subscription.getSubscriptionName()));
+                ((Session) context.getSession()).unsubscribe(subscription.name);
+                logger.info(name.concat(" : Unsubscribed : ").concat(subscription.name));
             } catch (JMSException ex) {
-                logger.error(getName().concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause() != null ? ex.getCause().getMessage() : ""));
+                logger.error(name.concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause() != null ? ex.getCause().getMessage() : ""));
             }
         }
     }
@@ -144,7 +143,7 @@ public class JmsConsumerConnectionManager extends JmsConnectionManager<JmsConsum
             // KEEP TRACK OF PREVIOUS SUBSCRIPTIONS METADATA
             previousSubscriptions = new HashSet<>();
             for (JmsSubscriptionContext subscription : ((JmsConsumerContext) context).getSubscriptions()) {
-                previousSubscriptions.add(subscription.getDescriptor());
+                previousSubscriptions.add(subscription.descriptor);
             }
 
             // RECONNECT

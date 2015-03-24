@@ -22,26 +22,16 @@ import net.sfr.tv.messaging.api.context.SubscriptionContext;
 import net.sfr.tv.messaging.impl.ConsumerWrapper;
 
 /**
- * A JMS subscription is composed of :
- * <ul>
- *  <li> metadata : Subscription name prefix, durability, selector, destination type
- *  <li> a destination
- *  <li> a listener, consuming messages
- * </ul>
+ * A JMS subscription context holds an additional reference to the Destination instance.
  * 
  * @author matthieu.chaplin@sfr.com
  */
 public class JmsSubscriptionContext extends SubscriptionContext<MessageConsumer> {
     
-    private final Destination destination;
+    public final Destination destination;
     
     public JmsSubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName, final Destination dst, final ConsumerWrapper<MessageConsumer> consumer) {
         super(descriptor, subscriptionName, consumer);
         this.destination = dst;
-        this.consumer = consumer;
-    }
-
-    public Destination getDestination() {
-        return destination;
     }
 }

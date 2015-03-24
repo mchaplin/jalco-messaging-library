@@ -52,7 +52,7 @@ public class JmsProducerConnectionManager extends JmsConnectionManager implement
             
             Destination dest = (Destination) jndiContext.lookup(destination);
             
-            session = context.getConnection().createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
+            session = context.connection.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
             producer = session.createProducer(dest);
             
             // Set Delivery Mode (Durable, Non-Durable)
@@ -72,7 +72,7 @@ public class JmsProducerConnectionManager extends JmsConnectionManager implement
                 logger.debug("\t Message Timestamp ? " + !producer.getDisableMessageTimestamp());
             }
          
-            return new JmsMessageProducer(getName(), context.getJndiContext(), context.getConnection(), session, producer);
+            return new JmsMessageProducer(context.jndiContext, context.connection, session, producer);
             
         } catch (NamingException | JMSException ex) {
             logger.error("Unable to create connection upon destination : ".concat(destination).concat(" ! Cause : ").concat(ex.getMessage()));

@@ -60,7 +60,7 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
         
         lookup(activeServer, 2, TimeUnit.SECONDS);
         
-        logger.info(getName().concat(" : Service provider URL : ").concat(activeServer.getProviderUrl()));
+        logger.info(name.concat(" : Service provider URL : ").concat(activeServer.getProviderUrl()));
     }
 
     @Override
@@ -82,7 +82,7 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
             }
             
         } catch (InterruptedException | ExecutionException ex) {
-            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+            logger.error(name.concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         }
     }
     
@@ -101,22 +101,20 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
         try {
             while (futureContext == null || (context = futureContext.get()) == null) {
                 // reschedule a task
-                ct = new ConnectTask<T>(jndiContext, clientId, cnxFactoryJndiName, credentials, this);
+                ct = new ConnectTask<>(jndiContext, clientId, cnxFactoryJndiName, credentials, this);
                 futureContext = scheduler.schedule(ct, initConnect ? 0 : delay, TimeUnit.SECONDS);
                 initConnect = false;
             }
             
-        } catch (InterruptedException ex) {
-            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
-        } catch (ExecutionException ex) {
-            logger.error(getName().concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
+        } catch (InterruptedException | ExecutionException ex) {
+            logger.error(name.concat(" : ").concat(ex.getMessage()).concat(" : Caused by : ").concat(ex.getCause().getMessage()));
         }
     }
     
     @Override
     public void disconnect() {
       
-        logger.info(getName().concat(" : Disconnecting.."));
+        logger.info(name.concat(" : Disconnecting.."));
         
         // TERMINATE SESSION
         if (context.getSession() != null) {
@@ -128,10 +126,10 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
         }
         
         // CLOSE CONNECTION
-        if (context.getConnection() != null) {
+        if (context.connection != null) {
             try {
-                context.getConnection().stop();
-                context.getConnection().close();
+                context.connection.stop();
+                context.connection.close();
             } catch (JMSException ex) {
                 logger.warn(ex.getMessage());
             }
@@ -141,12 +139,12 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
     @Override
     public void onException(JMSException e) {
         
-        logger.error(getName().concat(" : onException : ").concat(e.getMessage()));
+        logger.error(name.concat(" : onException : ").concat(e.getMessage()));
         
         if (e.getMessage().toUpperCase().contains("DISCONNECTED")) {
 
             // BLACKLIST ACTIVE SERVER
-            logger.error(getName().concat(" : Active Server not available anymore ! ").concat(activeServer.getProviderUrl()));
+            logger.error(name.concat(" : Active Server not available anymore ! ").concat(activeServer.getProviderUrl()));
             if (availableServers.size() > 1) {
                 for (MessagingServerDescriptor srv : availableServers) {
                     if (!srv.equals(activeServer)) {
@@ -158,14 +156,14 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
 
             // LOOKUP NEW JNDI CONTEXT
             lookup(activeServer, 2, TimeUnit.SECONDS);
-            logger.info(getName().concat(" : service provider URL : ").concat(activeServer.getProviderUrl()));
+            logger.info(name.concat(" : service provider URL : ").concat(activeServer.getProviderUrl()));
 
             // CONNECT TO NEW ACTIVE SERVER WITH A 2 SECONDS PERIOD.
             connect(2, TimeUnit.SECONDS);   
         }
     }
     
-    public final String getName() {
+    /*public final String getName() {
         return name;
     }
 
@@ -183,5 +181,5 @@ public abstract class JmsConnectionManager<T extends JmsContext> extends Abstrac
 
     public final String getClientId() {
         return clientId;
-    }
+    }*/
 }

@@ -50,7 +50,7 @@ public class SubscribeTask implements Callable<JmsConsumerContext> {
     private final MessageListener listener;
     
     public SubscribeTask(JmsContext context, SubscriptionDescriptor descriptor, MessageListener listener) {
-        this.context = new JmsConsumerContext(context.getJndiContext(), context.getConnection(), context.getSession());
+        this.context = new JmsConsumerContext(context.jndiContext, context.connection, context.getSession());
         this.metadata = descriptor;
         this.listener = listener;
     }
@@ -65,7 +65,7 @@ public class SubscribeTask implements Callable<JmsConsumerContext> {
             Destination dst;
             MessageConsumer consumer;
 
-            dst = lookupDestination(context.getJndiContext(), metadata.getDestination(), metadata.isIsTopicSubscription());
+            dst = lookupDestination(context.jndiContext, metadata.getDestination(), metadata.isIsTopicSubscription());
             if (dst != null) {
                 consumer = createSubscription(metadata.isIsTopicSubscription() ? (Topic) dst : (Queue) dst, context.getSession(), metadata.isIsTopicSubscription(), metadata.getSubscriptionName(), metadata.getSelector());
                 //jmsSubscriptions.add(new JmsSubscription(metadata, subscription, dst, consumer));

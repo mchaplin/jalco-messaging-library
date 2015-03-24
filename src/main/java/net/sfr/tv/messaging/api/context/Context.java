@@ -19,7 +19,8 @@ package net.sfr.tv.messaging.api.context;
  * Messaging context. Reference a messaging session.
  * 
  * @author matthieu.chaplin@sfr.com
- * @param <T>
+ * 
+ * @param <T> Concrete session type.
  */
 public abstract class Context<T> {
     

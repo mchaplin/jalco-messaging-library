@@ -102,14 +102,12 @@ public abstract class ProducerPool implements NamedObject {
         }
         
         logger.info("Invalidating connection toward destination : ".concat(key));
-         
-        for (BlockingDeque<MessageProducer> deck : pool.values()) {
-            for (MessageProducer ctx : deck) {
-                if (ctx.getParentName().equals(instance.getParentName())) {
-                    instance.close();
-                    deck.remove(ctx);
-                }
-            }
+        instance.close();
+        
+        BlockingDeque<MessageProducer> deck = pool.get(key);        
+        for (MessageProducer ctx : deck) {
+            ctx.close();
+            deck.remove(ctx);
         }
     }
     
@@ -124,14 +122,8 @@ public abstract class ProducerPool implements NamedObject {
         
         for (BlockingDeque<MessageProducer> deck : pool.values()) {
             for (MessageProducer ctx : deck) {
-                if (ctx.getParentName().equals(ocm.getName())) {
-                    //try {
-                        ctx.close();
-                    /*} catch (JMSException ex) {
-                        logger.error(ex.getMessage());
-                    }*/
-                    deck.remove(ctx);
-                }
+                ctx.close();
+                deck.remove(ctx);
             }
         }
     }

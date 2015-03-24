@@ -19,10 +19,12 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import net.sfr.tv.messaging.impl.MessagingServerDescriptor;
 import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import net.sfr.tv.messaging.api.connection.ConsumerConnectionManager;
 import net.sfr.tv.messaging.api.MessageProducer;
+import net.sfr.tv.messaging.api.MessagingException;
 import net.sfr.tv.messaging.api.connection.ProducerConnectionManager;
 import net.sfr.tv.messaging.api.context.SubscriptionContext;
 import net.sfr.tv.messaging.impl.AbstractConnectionManager;
@@ -106,19 +108,19 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
             }
 
         } catch (InterruptedException | ExecutionException ex) {
-            //logger.error(ex.getMessage().concat(" : Caused by : ").concat(ex.getCause() != null ? ex.getCause().getMessage() : ""));
-            logger.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage());
         }
     }
 
     @Override
-    public void connect(long delay, TimeUnit tu) {
+    public void connect(long delay, TimeUnit tu) throws MessagingException {
         try {
             ClientSession session = sessionFactory.createSession();
             logger.info("HornetQ client session created, with version " + session.getVersion());
             this.context = new HqCoreContext(session);
         } catch (HornetQException ex) {
-            logger.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage());
+            throw new MessagingException(ex);
         }
     }
     
@@ -160,7 +162,7 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     public void unsubscribe(HqCoreContext context, SubscriptionContext<ClientConsumer> subscription) {
         try {
             context.session.close();
-            subscription.getConsumer().getWrapped().close();
+            subscription.consumer.getWrapped().close();
         } catch (HornetQException ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -174,11 +176,6 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
     }
 
     @Override
-    public String getName() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public MessageProducer createProducer(String destination) {
         try {
             logger.info("Creating producer bound to : " + destination);
@@ -187,7 +184,16 @@ public class HqCoreConnectionManager extends AbstractConnectionManager implement
             return new HqCoreMessageProducer(session, innerProducer);
         } catch (HornetQException ex) {
             logger.error(ex);
-            return null;
+            // TRY TO DISCONNECT, THEN RECONNECT
+            disconnect();
+            try {
+                lookup(2, TimeUnit.SECONDS);
+                connect(2, TimeUnit.SECONDS);
+                return createProducer(destination);
+            } catch (MessagingException ex1) {
+                logger.error(ex1);
+                return null;
+            }
         }
     }
 }

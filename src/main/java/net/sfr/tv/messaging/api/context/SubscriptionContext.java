@@ -19,33 +19,27 @@ import net.sfr.tv.messaging.api.SubscriptionDescriptor;
 import net.sfr.tv.messaging.impl.ConsumerWrapper;
 
 /**
- *
+ * A subscription context. References :
+ * <ul>
+ *  <li> A descriptor, holds subscription metadata.
+ *  <li> An optional subscription name.
+ *  <li> A wrapper to the message handler class.
+ * </ul>
+ * 
  * @author matthieu.chaplin@sfr.com
  * @param <T>
  */
 public class SubscriptionContext<T> {
  
-    protected final SubscriptionDescriptor descriptor;
+    public final SubscriptionDescriptor descriptor;
     
-    protected final String subscriptionName;
+    public final String name;
     
-    protected ConsumerWrapper<T> consumer;
+    public final ConsumerWrapper<T> consumer;
     
-    public SubscriptionContext(final SubscriptionDescriptor descriptor, final String subscriptionName, final ConsumerWrapper<T> consumer) {
+    public SubscriptionContext(final SubscriptionDescriptor descriptor, final String name, final ConsumerWrapper<T> consumer) {
         this.descriptor = descriptor;
-        this.subscriptionName = subscriptionName;
+        this.name = name;
         this.consumer = consumer;
-    }
-
-    public SubscriptionDescriptor getDescriptor() {
-        return descriptor;
-    }
-
-    public String getSubscriptionName() {
-        return subscriptionName;
-    }
-
-    public ConsumerWrapper<T> getConsumer() {
-        return consumer;
     }
 }

@@ -19,17 +19,13 @@ import java.util.List;
 
 /**
  *
+ * 
  * @author matthieu.chaplin@sfr.com
  */
 public interface MessageProducer {
-   
-    /**
-     * @return Logical name of the ConnectionManager that created this instance.
-     */
-    String getParentName();
     
     /**
-     * @return Tests for producer validity.
+     * @return Test for producer validity.
      */
     Boolean isValid();
     
@@ -38,9 +34,27 @@ public interface MessageProducer {
      */
     void invalidate();
     
+    /**
+     * Close this instance, releasing associated resources.
+     */
     void close();
     
+    /**
+     * Send a text message.
+     * 
+     * @param properties    Message headers/properties to set.
+     * @param text          Body.
+     * 
+     * @throws MessagingException 
+     */
     void sendTextMessage(List<MessageProperty> properties, String text) throws MessagingException;
     
+    /**
+     * Send a byte message.
+     * 
+     * @param properties    Message headers/properties to set.
+     * @param buffer        Body.
+     * @throws MessagingException 
+     */
     void sendBytesMessage(List<MessageProperty> properties, byte[] buffer) throws MessagingException;
 }

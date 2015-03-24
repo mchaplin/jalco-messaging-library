@@ -35,7 +35,7 @@ public class JmsConsumerContext extends JmsContext {
     
     public void addSubscription(JmsSubscriptionContext subscription) {
         if (subscriptions == null) {
-            subscriptions = new HashSet<JmsSubscriptionContext>();
+            subscriptions = new HashSet<>();
         }
         subscriptions.add(subscription);
     }

@@ -20,41 +20,26 @@ import javax.jms.Session;
 import javax.naming.Context;
 
 /**
- * A JMS context resources : References/wraps :
+ * A JMS context resources : References :
  * <ul>
  *  <li> JNDI context
  *  <li> JMS connection and session
- *  <li> A set of active subscriptions
  * </ul>.
- * 
- * @see net.sfr.tv.jms.client.JmsContextFactory
- * @see net.sfr.tv.jms.client.JmsClient#start(java.lang.String, java.lang.String, boolean, java.lang.String, java.lang.String, net.sfr.tv.jms.client.JmsContextFactory, java.lang.String)
  * 
  * @author matthieu.chaplin@sfr.com
  */
 public class JmsContext extends net.sfr.tv.messaging.api.context.Context<Session> {
 
-    private Context jndiContext;
-    private Connection cnx = null;
+    public Context jndiContext;
+    public Connection connection;
     
     public JmsContext(Context jndiContext, Connection cnx, Session session) {
         this.jndiContext = jndiContext;
-        this.cnx = cnx;
+        this.connection = cnx;
         this.session = session;
     }
-
-    public Context getJndiContext() {
-        return jndiContext;
-    }
-
-    public void setJndiContext(Context jndiContext) {
-        this.jndiContext = jndiContext;
-    }
-    
-    public Connection getConnection() {
-        return cnx;
-    }
-    
+   
+    @Override
     public Session getSession() {
         return session;
     }

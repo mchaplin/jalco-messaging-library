@@ -18,12 +18,17 @@ package net.sfr.tv.messaging.api.connection;
 import net.sfr.tv.messaging.api.MessageProducer;
 
 /**
- *
+ * Handles producer-mode connections operations.
+ * 
  * @author matthieu.chaplin@sfr.com
  */
 public interface ProducerConnectionManager extends ConnectionManager {
     
-    String getName();
-    
+    /**
+     * Creates a message producer.
+     * 
+     * @param destination Target messaging adress
+     * @return 
+     */
     MessageProducer createProducer(String destination);
 }

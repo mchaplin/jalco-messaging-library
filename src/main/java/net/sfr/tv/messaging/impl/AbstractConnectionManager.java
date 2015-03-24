@@ -58,4 +58,6 @@ public abstract class AbstractConnectionManager implements ConnectionManager {
             this.activeServer = availableServers.iterator().next();
         }
     }
+    
+    
 }

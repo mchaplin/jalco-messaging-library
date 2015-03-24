@@ -36,28 +36,19 @@ public class JmsMessageProducer extends JmsContext implements MessageProducer {
 
     private Boolean valid = Boolean.TRUE;
 
-    /**
-     * Name of the OutboundConnectionManager that created this context.
-     */
-    private final String parentName;
-
     private final javax.jms.MessageProducer producer;
 
-    public JmsMessageProducer(final String parentName, final Context jndiContext, final Connection cnx, final Session session, final javax.jms.MessageProducer producer) {
+    public JmsMessageProducer(final Context jndiContext, final Connection cnx, final Session session, final javax.jms.MessageProducer producer) {
         super(jndiContext, cnx, session);
-        this.parentName = parentName;
         this.producer = producer;
     }
 
     @Override
-    public String getParentName() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     public Boolean isValid() {
         return valid;
     }
 
+    @Override
     public void invalidate() {
         this.valid = Boolean.FALSE;
     }
