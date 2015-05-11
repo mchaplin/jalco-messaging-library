@@ -55,6 +55,10 @@ public class HqCoreLookupTask implements Callable<ClientSessionFactory> {
          // -------------------------------------------------------
 
          ServerLocator serverLocator = HornetQClient.createServerLocatorWithoutHA(new TransportConfiguration(NettyConnectorFactory.class.getName(), map));
+         // TODO : MAKE CONFIGURABLE
+         serverLocator.setPreAcknowledge(true);
+         serverLocator.setBlockOnDurableSend(false);
+         serverLocator.setConsumerMaxRate(-1);
          ClientSessionFactory sessionFactory = serverLocator.createSessionFactory();
          return sessionFactory;
     }
